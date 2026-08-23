@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="fa-AF" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>جیم‌لاگ ۲ — نسخه علمی</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1115;--card:#171a21;--card2:#1d212b;--line:#262b37;--txt:#e7e9ee;--mut:#8b93a3;--acc:#a3e635;--acc-dim:#84cc16;--red:#f87171;--blue:#60a5fa;--amber:#fbbf24}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"Vazirmatn",Tahoma,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:80px;font-size:15px;line-height:1.6}
+input,select,button{font-family:inherit;font-size:inherit;color:inherit}
+input[type=number],input[type=text]{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;outline:none}
+input:focus{border-color:var(--acc)}
+h2{font-size:17px;font-weight:800;margin-bottom:12px}
+.mut{color:var(--mut);font-size:12.5px}
+header{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:10px}
+header .logo{width:34px;height:34px;border-radius:10px;background:var(--acc);color:#0f1115;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px}
+header h1{font-size:16.5px;font-weight:800}
+main{max-width:560px;margin:0 auto;padding:14px 14px 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:8px}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.btn{background:var(--acc);color:#0f1115;border:none;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;width:100%}
+.btn:active{opacity:.85}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.sm{width:auto;padding:7px 13px;font-size:13px;border-radius:10px}
+.btn.danger{background:transparent;color:var(--red);border:1px solid var(--red)}
+.chip{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer}
+.chip.on{background:var(--acc);color:#0f1115;border-color:var(--acc);font-weight:700}
+.chip.warn{border-color:var(--amber);color:var(--amber)}
+.bar{height:9px;background:var(--card2);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .4s}
+.bar.blue>i{background:var(--blue)}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(23,26,33,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);display:flex;justify-content:space-around;padding:6px 2px calc(8px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+nav button{background:none;border:none;color:var(--mut);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;flex:1;padding:5px 0}
+nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--acc);font-weight:700}
+.stat{flex:1;text-align:center;background:var(--card2);border-radius:12px;padding:10px 6px}
+.stat b{font-size:18px;color:var(--acc)}
+.stat span{display:block;font-size:11px;color:var(--mut)}
+table.sets{width:100%;border-collapse:collapse;font-size:13.5px}
+table.sets th{color:var(--mut);font-weight:500;font-size:11px;padding:4px;text-align:center}
+table.sets td{padding:4px}
+table.sets input{width:100%;text-align:center;padding:8px 2px;border-radius:9px}
+.done-btn{width:34px;height:34px;border-radius:10px;border:1.5px solid var(--line);background:var(--card2);color:var(--mut);cursor:pointer;font-size:15px;line-height:1}
+.done-btn.did{background:var(--acc);border-color:var(--acc);color:#0f1115;font-weight:900}
+.setdone td{opacity:.55}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:40;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:86vh;overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+.grabber{width:42px;height:4px;background:var(--line);border-radius:99px;margin:0 auto 14px}
+.li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:none}
+.li b{font-weight:600;font-size:14px}
+.timerbar{position:fixed;bottom:76px;left:12px;right:12px;max-width:536px;margin:0 auto;z-index:35;background:var(--card2);border:1px solid var(--acc);border-radius:16px;padding:10px 14px;display:none}
+.timerbar.open{display:block}
+.timerbar b{font-size:24px;color:var(--acc);font-variant-numeric:tabular-nums}
+.vbar{margin:7px 0}
+.vbar .spread{margin-bottom:3px;font-size:13px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);z-index:60;background:var(--acc);color:#0f1115;font-weight:800;border-radius:12px;padding:10px 20px;transition:transform .3s;font-size:14px;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.pr{color:var(--amber);font-weight:800;font-size:11.5px}
+.empty{text-align:center;color:var(--mut);padding:24px 10px;font-size:13.5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.flag-up{color:var(--acc)}
+.flag-flat{color:var(--blue)}
+.flag-down{color:var(--amber)}
+.pain{color:var(--red)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">JL2</div>
+  <div style="flex:1"><h1>جیم‌لاگ ۲</h1><div class="mut" id="hdr-date"></div></div>
+  <span class="chip" id="streak-chip">🔥 <span id="streak-n">۰</span></span>
+</header>
+<main id="main"></main>
+<div class="timerbar" id="timerbar">
+  <div class="spread">
+    <div class="row"><b id="timer-num">1:30</b><span class="mut">استراحت</span></div>
+    <div class="row">
+      <button class="btn ghost sm" data-act="timer-minus">−۱۵</button>
+      <button class="btn ghost sm" data-act="timer-plus">+۱۵</button>
+      <button class="btn sm" data-act="timer-skip">پایان</button>
+    </div>
+  </div>
+</div>
+<nav id="nav">
+  <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>خانه</span></button>
+  <button data-tab="workout"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg><span>تمرین</span></button>
+  <button data-tab="volume"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-9M22 20H2"/></svg><span>حجم</span></button>
+  <button data-tab="meso"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>مسوسیکل</span></button>
+  <button data-tab="history"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg><span>تاریخچه</span></button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span>تنظیمات</span></button>
+</nav>
+<div class="modal-bg" id="modal-bg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const KEY="gymlog_v2", OLDKEY="gymlog_v1";
+const MK={chest:"سینه",back:"پشت",quads:"چهارسر",hams:"همسترینگ/باسن",delts:"سرشانه",biceps:"جلوبازو",triceps:"پشت‌بازو",calves:"ساق",abs:"شکم"};
+const MKORDER=["chest","back","quads","hams","delts","biceps","triceps","calves","abs"];
+const CLSN={H:"کمپاند سنگین (RIR ۲–۳)",C:"کمپاند (RIR ۱–۲)",I:"ایزوله (RIR ۰–۱)"};
+
+const LIB=[
+{id:"bench",n:"بنچ‌پرس هالتر",mk:"chest",sec:["triceps"],cls:"C",eq:"هالتر",vid:"mFQ22MTKlBc",how:"پاها محکم، کتف جمع، تا سینه پایین بیاور و بالا ببر؛ آرنج ~۴۵ درجه."},
+{id:"incline_db",n:"پرس بالاسینه دمبل",mk:"chest",sec:["triceps"],cls:"C",eq:"دمبل",vid:"sbE2PlWJW5U",how:"شیب ۳۰ درجه؛ دمبل‌ها از سطح سینه بالا، کنترل کامل پایین."},
+{id:"pushup",n:"شنا سوئدی",mk:"chest",sec:["triceps"],cls:"C",eq:"بدن",vid:"2o0lPbqg8BI",how:"بدن صاف مثل تخته؛ سینه به زمین، بدون مکث کف."},
+{id:"cable_cross",n:"کراس اور سیم‌کش",mk:"chest",sec:[],cls:"I",eq:"سیم‌کش",vid:"DQ9BTTmJQNI",how:"از بالا به وسط سینه؛ tension را در کل مسیر نگه دار، پرش ممنوع."},
+{id:"ohp",n:"پرس سرشانه هالتر",mk:"delts",sec:["triceps"],cls:"C",eq:"هالتر",vid:"Uj52XT-g6rA",how:"ایستاده، از چانه تا بالای سر؛ کمر اغراق‌آمیز خم نشود."},
+{id:"lat_raise",n:"نشر جانب دمبل",mk:"delts",sec:[],cls:"I",eq:"دمبل",vid:"czhFkMTkhrE",how:"کف دست رو به پایین در تمام حرکت؛ آرنج کمی خم؛ تا سطح شانه."},
+{id:"dips",n:"پارالل (دیپس)",mk:"chest",sec:["triceps"],cls:"C",eq:"بدن",vid:"glFxfhN5lio",how:"تنه کمی جلو برای سینه؛ عمق تا احساس کشش، بدون پرش از پایین."},
+{id:"triceps_pd",n:"پشت‌بازو سیم‌کش طناب",mk:"triceps",sec:[],cls:"I",eq:"سیم‌کش",vid:"LhtxET_siU0",how:"آرنج چسبیده؛ فقط ساعد؛ در انتها طناب را کمی باز کن."},
+{id:"skull",n:"اسکال‌کرشر",mk:"triceps",sec:[],cls:"I",eq:"دمبل",vid:"wzTNBjNY8dA",how:"اول آرنج به سمت لگن بشکند بعد ساعد پایین — نجات‌دهندهٔ آرنج."},
+{id:"deadlift",n:"ددلیفت",mk:"hams",sec:["back"],cls:"H",eq:"هالتر",vid:"uB_c9jpyieg",how:"کمر خنثی؛ وزنه چسبیده به بدن؛ از پا بران، نه از کمر. فرم > وزنه."},
+{id:"pullup",n:"بارفیکس",mk:"back",sec:["biceps"],cls:"C",eq:"بدن",vid:"P2luagd0TX8",how:"کتف را جمع کن؛ چانه بالای میله؛ کنترل پایین‌آمدن."},
+{id:"pulldown",n:"زیربغل سیم‌کش از جلو",mk:"back",sec:["biceps"],cls:"C",eq:"سیم‌کش",vid:"Ph_xGA-HC-o",how:"سینه بالا، شانه پایین؛ میله تا بالای سینه؛ کتف جمع در انتها."},
+{id:"row_bb",n:"زیربغل هالتر خم",mk:"back",sec:["biceps"],cls:"C",eq:"هالتر",vid:"_ywgRWBmGyQ",how:"تنه ~۴۵ درجه؛ به سمت شکم بکش؛ کمر صاف ثابت."},
+{id:"row_db",n:"زیربغل تک‌دمبل",mk:"back",sec:["biceps"],cls:"C",eq:"دمبل",vid:"pgZgueSYycA",how:"یک زانو روی نیمکت؛ به سمت لگن بکش، نه سینه."},
+{id:"face_pull",n:"فییس‌پول",mk:"delts",sec:["back"],cls:"I",eq:"سیم‌کش",vid:"gWRREo_YdUw",how:"طناب به سمت صورت؛ آرنج‌های بازتر از دست‌ها؛ کتف جمع."},
+{id:"shrug",n:"شراگ دمبل",mk:"back",sec:[],cls:"I",eq:"دمبل",how:"شانه مستقیم بالا به گوش‌ها؛ نچرخان؛ یک لحظه مکش بالا."},
+{id:"curl_bb",n:"جلوبازو هالتر",mk:"biceps",sec:[],cls:"I",eq:"هالتر",vid:"HDYZpA5_Re0",how:"آرنج ثابت کنار بدن؛ بدون تاب دادن تنه."},
+{id:"hammer_curl",n:"چکشی دمبل",mk:"biceps",sec:[],cls:"I",eq:"دمبل",vid:"0WhYkP9B2b4",how:"گیر عمودی؛ براکیالیس را هدف می‌گیرد — ضخامت بازو."},
+{id:"preacher",n:"جلوبازو لاری",mk:"biceps",sec:[],cls:"I",eq:"EZ",vid:"sV1vYCMfFc4",how:"بازو روی تکیه‌گاه؛ دامنه کامل، مخصوصاً بخش کشیده."},
+{id:"incline_curl",n:"جلوبازو شیبی دمبل",mk:"biceps",sec:[],cls:"I",eq:"دمبل",vid:"oXHmStcjw3I",how:"بازو پشت خط تنه = بیشترین طول عضله؛ بهترین رشد سر."},
+{id:"squat",n:"اسکوات هالتر",mk:"quads",sec:["hams"],cls:"H",eq:"هالتر",vid:"a_zztDLx8-w",how:"پاشنه‌ها زمین؛ تا موازی یا کمتر؛ زانو هم‌راستا پنجه. فرم > عمق اجباری."},
+{id:"rdl",n:"ددلیفت رومانیایی",mk:"hams",sec:["back"],cls:"H",eq:"هالتر",vid:"AnXiXsJJbio",how:"زانو کم‌خم؛ لگن به عقب؛ وزنه چسبیده پا تا حس کشش عمیق همسترینگ."},
+{id:"leg_press",n:"پرس پا دستگاه",mk:"quads",sec:[],cls:"C",eq:"دستگاه",how:"پاها عرض شانه؛ عمق تا ~۹۰ درجه؛ کمر از صندلی جدا نشود."},
+{id:"leg_ext",n:"جلو پا دستگاه",mk:"quads",sec:[],cls:"I",eq:"دستگاه",vid:"6X1f7xhkliI",how:"مهم‌ترین حرکت برای راست‌رانی؛ مکش یک لحظه بالا."},
+{id:"leg_curl",n:"پشت پا دستگاه",mk:"hams",sec:[],cls:"I",eq:"دستگاه",vid:"b_jAyOmHJYU",how:"نشسته = تمرین در حالت کشیده (بهتر!)؛ آهسته برگردان."},
+{id:"calf",n:"ساق پا ایستاده",mk:"calves",sec:[],cls:"I",eq:"دستگاه",vid:"a1tK1gwk7TM",how:"بدون پرش! کشش کامل پایین، مکش بالا؛ نصف پا روی لبه."},
+{id:"hip_thrust",n:"هیپ تراست",mk:"hams",sec:[],cls:"C",eq:"هالتر",how:"زانو ~۹۰ درجه در بالا؛ مکش ۱–۲ ثانیه؛ سبک‌تر از غرور تو."},
+{id:"plank",n:"پلانک",mk:"abs",sec:[],cls:"I",eq:"بدن",how:"لگن را کمی عقب بچرخان — شکم واقعاً کار کند؛ ثانیه‌ها را ثبت کن."},
+{id:"crunch",n:"کرانچ سیم‌کش",mk:"abs",sec:[],cls:"I",eq:"سیم‌کش",how:"مهره‌به‌مهره خم شو؛ گردن نکش؛ سنگین‌شدنی است مثل هر عضله."},
+{id:"leg_raise",n:"بالا آوردن پا آویزان",mk:"abs",sec:[],cls:"I",eq:"بدن",how:"لگن عقب بچرخاند که شکم کار کند نه خم‌کننده ران."}
+];
+const VIDBASE="https://www.youtube.com/watch?v=";
+
+const PROGRAM=[
+{id:"push",name:"پوش — سینه، سرشانه، پشت‌بازو",ex:[["bench",4],["incline_db",3],["ohp",3],["lat_raise",3],["triceps_pd",3],["dips",3]]},
+{id:"pull",name:"پول — پشت، جلوبازو",ex:[["deadlift",3],["pulldown",4],["row_bb",3],["face_pull",3],["curl_bb",3],["hammer_curl",3]]},
+{id:"legs",name:"پا — اسکوات، همسترینگ، ساق",ex:[["squat",4],["rdl",3],["leg_press",3],["leg_curl",3],["calf",4],["crunch",3]]}
+];
+
+const DEF_TGT={chest:12,back:12,quads:9,hams:9,delts:8,biceps:8,triceps:8,calves:6,abs:4};
+const DEFAULT={version:2,settings:{rir:true},meso:null,volumeTargets:{...DEF_TGT},history:[],prs:{},weights:[],activeSession:null,checkins:{}};
+
+let S=loadState();
+let ui={tab:"home",rest:null,timerInt:null,pickerTarget:null,pickerMode:"session",reviewStep:0,reviewData:{},foodDate:null};
+ui.foodDate=null;
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){return Object.assign(JSON.parse(JSON.stringify(DEFAULT)),JSON.parse(raw));}
+    const old=localStorage.getItem(OLDKEY);
+    if(old){
+      const o=JSON.parse(old);
+      const mig={...JSON.parse(JSON.stringify(DEFAULT)),history:o.history||[],prs:o.prs||{},weights:o.weights||[]};
+      localStorage.setItem(KEY,JSON.stringify(mig));
+      setTimeout(()=>toast("داده‌های نسخه ۱ منتقل شد ✅"),800);
+      return mig;
+    }
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT));
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+
+const $esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function today(d){const x=d?new Date(d):new Date();return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");}
+function fmtDate(iso){try{return new Date(iso+"T00:00:00").toLocaleDateString("fa-AF",{weekday:"long",day:"numeric",month:"long"});}catch(e){return iso;}}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2400);}
+function exById(id){return LIB.find(e=>e.id===id);}
+function e1rm(w,r){return w*Math.max(1,1+r/30);}
+function volOf(wsess){let v=0;(wsess.exercises||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.w&&s.r)v+=s.w*s.r;}));return Math.round(v);}
+
+function streak(){
+  const done=new Set(S.history.map(h=>h.date.slice(0,10)));
+  let n=0;const d=new Date();
+  if(!done.has(today()))d.setDate(d.getDate()-1);
+  while(done.has(today(d))){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function lastSetsFor(exId){
+  for(let i=S.history.length-1;i>=0;i--){
+    const w=(S.history[i].exercises||[]).find(e=>e.exId===exId);
+    if(w&&w.sets.length)return w.sets.filter(s=>s.w||s.r).map(s=>({w:s.w,r:s.r}));
+  }
+  return [];
+}
+
+function mesoInfo(){
+  if(!S.meso)return null;
+  const start=new Date(S.meso.start+"T00:00:00");
+  const days=Math.floor((Date.now()-start.getTime())/86400000)+1;
+  const week=Math.min(S.meso.weeks,Math.ceil(days/7));
+  return {week,days,done:days>S.meso.weeks*7,...S.meso};
+}
+function isDeloadWeek(){const m=mesoInfo();return !!(m&&m.week===1&&m.deloadFirst);}
+
+function weekSets(){
+  const out={};MKORDER.forEach(k=>out[k]=0);
+  const cutoff=Date.now()-7*86400000;
+  S.history.forEach(h=>{
+    if(new Date(h.date).getTime()<cutoff)return;
+    (h.exercises||[]).forEach(e=>{
+      const lib=exById(e.exId);if(!lib)return;
+      const n=(e.sets||[]).filter(s=>s.w||s.r).length;
+      if(n){out[lib.mk]=(out[lib.mk]||0)+n;(lib.sec||[]).forEach(m=>out[m]=(out[m]||0)+n*0.5);}
+    });
+  });
+  Object.keys(out).forEach(k=>out[k]=Math.round(out[k]*10)/10);
+  return out;
+}
+function totalVolLastDays(days){
+  const cutoff=Date.now()-days*86400000;
+  return S.history.filter(h=>new Date(h.date).getTime()>=cutoff).reduce((a,h)=>a+(h.volume||volOf(h)),0);
+}
+function acwr(){
+  const cur=totalVolLastDays(7);
+  const prev=(totalVolLastDays(28)-cur)/3;
+  if(prev<500)return null;
+  return Math.round(cur/Math.max(prev,1)*100)/100;
+}
+
+function startSession(dayId,dayName,exList,deload){
+  S.activeSession={
+    dayId,dayName,startedAt:new Date().toISOString(),
+    deload:!!deload,
+    exercises:exList.map(([id,baseSets])=>{
+      const lib=exById(id);const prev=lastSetsFor(id);
+      let sets=prev.length?prev.slice(0,Math.max(baseSets,prev.length)):[];
+      while(sets.length<(deload?Math.max(2,Math.round(baseSets/2)):baseSets))sets.push({w:"",r:""});
+      return {exId:id,name:lib.n,cls:lib.cls,target:deload?Math.max(2,Math.round(baseSets/2)):baseSets,
+        sets:sets.map(s=>({w:s.w,r:s.r,done:false}))};
+    })
+  };
+  save();render();
+}
+
+function openModal(html){$("#modal").innerHTML=`<div class="grabber"></div>`+html;$("#modal-bg").classList.add("open");}
+function closeModal(){$("#modal-bg").classList.remove("open");}
+
+function render(){
+  $("#streak-n").textContent=streak();
+  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===ui.tab));
+  const m=$("#main");
+  if(ui.tab==="home")m.innerHTML=vHome();
+  else if(ui.tab==="workout")m.innerHTML=vWorkout();
+  else if(ui.tab==="volume")m.innerHTML=vVolume();
+  else if(ui.tab==="meso")m.innerHTML=vMeso();
+  else if(ui.tab==="history")m.innerHTML=vHistory();
+  else m.innerHTML=vSettings();
+  $("#hdr-date").textContent=fmtDate(today());
+}
+
+function vHome(){
+  const mi=mesoInfo();
+  const sug=nextDay();
+  const ws=weekSets();
+  const top=MKORDER.filter(k=>ws[k]>0).sort((a,b)=>(ws[b]/(S.volumeTargets[b]||1))-(ws[a]/(S.volumeTargets[a]||1))).slice(0,3);
+  const sess=S.activeSession;
+  return `
+  ${mi?`<div class="card" style="border-color:${mi.done?"var(--amber)":"var(--acc)"}">
+    <div class="spread"><b>${mi.done?"مسوسیکل تمام شد — بازنگری لازم":"مسوسیکل فعال"}</b><span class="chip">${mi.week} از ${mi.weeks}</span></div>
+    ${mi.deloadFirst&&mi.week===1?`<p class="mut" style="margin-top:6px">این هفته دلود است — ست‌ها نصف شده‌اند.</p>`:""}
+    ${mi.done?`<button class="btn" style="margin-top:10px" data-act="open-review">شروع بازنگری مسوسیکل</button>`:`<p class="mut" style="margin-top:6px">روز ${mi.days} از بلوک</p>`}
+  </div>`:""}
+  ${sess?`<div class="card" style="border-color:var(--acc)">
+    <div class="spread"><b>تمرین در جریان</b><span class="mut">${$esc(sess.dayName)}</span></div>
+    <p class="mut" style="margin:6px 0 10px">${sess.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0)} ست ثبت • حجم ${volOf(sess)} کگ${sess.deload?" • هفته دلود":""}</p>
+    <button class="btn" data-act="go-workout">ادامه تمرین</button></div>`:""}
+  <div class="card">
+    <div class="spread"><h2 style="margin:0">تمرین پیشنهادی امروز</h2><span class="chip">${nextWeekCount()} جلسه / ۷ روز</span></div>
+    <p style="margin:8px 0 12px">${$esc(sug.name)}</p>
+    <button class="btn" data-act="start-suggested">شروع تمرین</button>
+    <button class="btn ghost" style="margin-top:8px" data-act="pick-day">روز دیگر…</button>
+  </div>
+  <div class="card">
+    <h2>حجم هفته (۷ روز اخیر)</h2>
+    ${top.length?top.map(k=>`
+      <div class="vbar"><div class="spread"><span>${MK[k]}${indirectNote(k)}</span><span class="mut">${ws[k]} / ${S.volumeTargets[k]} ست</span></div>
+      <div class="bar"><i style="width:${Math.min(100,ws[k]/(S.volumeTargets[k]||1)*100)}%"></i></div></div>`).join(""):`<p class="empty">هنوز ست‌ای این هفته ثبت نشده.</p>`}
+  </div>
+  <div class="card">
+    <div class="row" style="align-items:stretch">
+      <div class="stat"><b>${streak()}</b><span>روز پیوسته</span></div>
+      <div class="stat"><b>${S.history.length}</b><span>کل جلسات</span></div>
+      <div class="stat"><b>${S.weights.length?S.weights[S.weights.length-1].kg:"—"}</b><span>وزن بدن (کگ)</span></div>
+    </div>
+    <button class="btn ghost" style="margin-top:10px" data-act="log-weight">ثبت وزن امروز</button>
+  </div>`;
+}
+function indirectNote(k){
+  if(k==="triceps")return " *";
+  if(k==="biceps")return " *";
+  return "";
+}
+function nextWeekCount(){return S.history.filter(h=>new Date(h.date).getTime()>Date.now()-7*86400000).length;}
+function nextDay(){
+  if(!S.history.length)return PROGRAM[0];
+  const order=["push","pull","legs"];
+  const last=S.history[S.history.length-1];
+  const i=order.indexOf(last.dayId);
+  return PROGRAM[i===-1?0:(i+1)%3];
+}
+
+function vWorkout(){
+  const s=S.activeSession;
+  if(!s){
+    const sug=nextDay();
+    const dl=isDeloadWeek();
+    return `
+    ${dl?`<div class="card" style="border-color:var(--amber)"><b>هفته دلود</b><p class="mut" style="margin-top:4px">ست‌های پیشنهادی نصف شده‌اند. شدت را نگه دار، حجم را کم.</p></div>`:""}
+    <div class="card">
+      <h2>شروع تمرین</h2>
+      ${PROGRAM.map(p=>`<button class="btn ghost" style="margin-bottom:8px;text-align:right" data-act="start-day" data-id="${p.id}">${$esc(p.name)}</button>`).join("")}
+      <button class="btn" data-act="start-free">تمرین آزاد</button>
+      <p class="mut" style="margin-top:12px">پیشنهاد امروز: ${$esc(sug.name)}</p>
+    </div>
+    ${recentMini()}`;
+  }
+  return `
+  <div class="card">
+    <div class="spread">
+      <div><h2 style="margin:0">${$esc(s.dayName)}</h2><span class="mut">از ${new Date(s.startedAt).toLocaleTimeString("fa-AF",{hour:"2-digit",minute:"2-digit"})}${s.deload?" • دلود":""}</span></div>
+      <span class="chip">${volOf(s)} کگ حجم</span>
+    </div>
+  </div>
+  ${s.exercises.map((e,i)=>exCard(e,i)).join("")}
+  <button class="btn ghost" data-act="add-exercise">+ افزودن حرکت</button>
+  <button class="btn" style="margin-top:12px" data-act="finish">پایان و ذخیره تمرین</button>
+  <button class="btn danger" style="margin-top:8px" data-act="discard">لغو تمرین</button>`;
+}
+function recentMini(){
+  const last=S.history.slice(-3).reverse();
+  if(!last.length)return "";
+  return `<div class="card"><h2>آخرین جلسات</h2>${last.map(h=>`
+    <div class="li"><span><b>${$esc(h.dayName)}</b><br><span class="mut">${fmtDate(h.date.slice(0,10))}</span></span><span class="chip">${h.volume} کگ</span></div>`).join("")}</div>`;
+}
+function exCard(e,i){
+  const lib=exById(e.exId);
+  const prTxt=prFor(e.exId);
+  return `<div class="card">
+    <div class="exhead spread">
+      <div><span class="exname" style="font-weight:800;cursor:pointer" data-act="ex-info" data-i="${i}">${$esc(e.name)} ⌄</span><br>
+      <span class="exmeta mut">${lib?$esc(lib.eq)+" • "+CLSN[lib.cls]:""}${prTxt?" • <span class='pr'>رکورد "+prTxt+"</span>":""}</span></div>
+      <button class="btn ghost sm" data-act="del-exercise" data-i="${i}">✕</button>
+    </div>
+    <table class="sets"><thead><tr><th style="width:30px">ست</th><th>وزن</th><th>تکرار</th>${S.settings.rir?"<th>RIR</th>":""}<th style="width:40px">✓</th></tr></thead><tbody>
+    ${e.sets.map((st,j)=>`<tr class="${st.done?"setdone":""}">
+      <td style="text-align:center;color:var(--mut)">${j+1}</td>
+      <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${st.w}" data-role="w" data-i="${i}" data-j="${j}"></td>
+      <td><input type="number" min="0" inputmode="numeric" value="${st.r}" data-role="r" data-i="${i}" data-j="${j}"></td>
+      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir??""}" placeholder="${defRir(lib)}" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
+      <td style="text-align:center"><button class="done-btn ${st.done?"did":""}" data-act="toggle-set" data-i="${i}" data-j="${j}">✓</button></td>
+    </tr>`).join("")}
+    </tbody></table>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost sm" data-act="add-set" data-i="${i}">+ ست</button>
+      ${isPrLive(e)?`<span class="pr">رکورد جدید!</span>`:""}
+    </div>
+  </div>`;
+}
+function defRir(lib){return lib?(lib.cls==="H"?2:lib.cls==="C"?1:0):1;}
+function prFor(exId){const p=S.prs[exId];return p?p.w+"×"+p.r:"";}
+function isPrLive(e){
+  const p=S.prs[e.exId];if(!p)return false;
+  return (e.sets||[]).some(s=>s.w&&s.r&&e1rm(+s.w,+s.r)>e1rm(p.w,p.r)*1.001);
+}
+
+function vVolume(){
+  const ws=weekSets();
+  const r=acwr();
+  return `
+  ${r!==null?`<div class="card"><div class="spread"><b>نسبت بار فعلی به میانگین</b><span class="chip ${r>1.5?"warn":""}">${r}×</span></div>
+  <p class="mut" style="margin-top:6px">${r>1.5?"⚠️ جهش بار — خطر مصدومیت. آرام افزایش بده.":r<0.6?"حجم خیلی کمتر از میانگین — اگر دلود نیستی، کمی بیشتر.":"محدوده امن ✅"}</p></div>`:""}
+  <div class="card">
+    <h2>ست هفتگی به تفکیک عضله</h2>
+    <p class="mut" style="margin-bottom:10px">هدف‌ها قابل ویرایش در تنظیمات. * = شمارش غیرمستقیم (۰٫۵ ست).</p>
+    ${MKORDER.map(k=>{
+      const t=S.volumeTargets[k]||0;const v=ws[k]||0;
+      const pct=t?Math.min(100,v/t*100):(v?100:0);
+      const col=v>t*1.35?"var(--red)":(v>=t*0.85?"var(--acc)":"var(--blue)");
+      return `<div class="vbar"><div class="spread"><span>${MK[k]}${indirectNote(k)}</span><span class="mut">${v} / ${t}</span></div>
+      <div class="bar"><i style="width:${pct}%;background:${col}"></i></div></div>`;
+    }).join("")}
+  </div>
+  <div class="card">
+    <h2>حجم تمرینی (۸ جلسه اخیر)</h2>
+    ${chartVolumes()}
+  </div>`;
+}
+function chartVolumes(){
+  const last=S.history.slice(-8);
+  if(!last.length)return `<p class="empty">هنوز جلسه‌ای نیست.</p>`;
+  const vols=last.map(h=>h.volume||volOf(h));
+  const mx=Math.max(...vols,1);
+  return `<div class="vols" style="display:flex;align-items:flex-end;gap:6px;height:70px;padding-top:6px">${last.map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><i style="display:block;width:100%;background:var(--acc-dim);border-radius:6px;height:${vols[i]/mx*100}%"></i><span class="mut" style="font-size:9px">${h.date.slice(5)}</span></div>`).join("")}</div>`;
+}
+
+function vMeso(){
+  const mi=mesoInfo();
+  if(!mi){
+    return `<div class="card">
+      <h2>شروع مسوسیکل</h2>
+      <p class="mut" style="margin-bottom:10px">یک بلوک ${4} هفته‌ای: هفتهٔ اول دلود (~۶۵٪ حجم)، سه هفتهٔ دیگر با RIR ثابت. آخر بلوک، جادوگر بازنگری پیشنهاد می‌دهد چه چیزی تغییر کند.</p>
+      <div class="grid2">
+        <div><span class="mut">طول بلوک (هفته)</span><input type="number" id="meso-weeks" value="4" min="3" max="8"></div>
+        <div><span class="mut">تاریخ شروع</span><input type="date" id="meso-start" value="${today()}"></div>
+      </div>
+      <button class="btn" style="margin-top:10px" data-act="start-meso">شروع مسوسیکل</button>
+    </div>
+    <div class="card"><h2>منطق بلوک</h2>
+      <div class="li"><b>RIR ثابت</b><span class="mut">سنگین ۲–۳ · کمپاند ۱–۲ · ایزوله ۰–۱</span></div>
+      <div class="li"><b>پیشرفت</b><span class="mut">تجویز نمی‌شود — از لاگ بیرون می‌آید</span></div>
+      <div class="li"><b>پایان بلوک</b><span class="mut">هیچ / حجم± / تعویض حرکت</span></div>
+    </div>`;
+  }
+  if(mi.done&&ui.reviewStep===0){
+    return `<div class="card" style="border-color:var(--amber)">
+      <b>مسوسیکل تمام شد 🎉</b>
+      <p class="mut" style="margin-top:6px">قبل از بلوک بعدی، ۶۰ ثانیه بازنگری: سیستم بر اساس لاگ، روند هر عضله را پیشنهاد می‌دهد؛ تأیید یا اصلاح کن.</p>
+      <button class="btn" style="margin-top:10px" data-act="open-review">شروع بازنگری</button>
+    </div>`;
+  }
+  if(ui.reviewStep>0)return reviewHTML();
+  const trends=trendsFor();
+  return `
+  <div class="card">
+    <div class="spread"><b>هفته ${mi.week} از ${mi.weeks}</b><span class="chip">روز ${mi.days}</span></div>
+    ${mi.deloadFirst&&mi.week===1?`<p class="mut" style="margin-top:6px">هفته دلود — ست‌های پیشنهادی نصف است.</p>`:""}
+  </div>
+  <div class="card">
+    <h2>روند حرکات این بلوک</h2>
+    ${trends.length?trends.map(t=>`
+      <div class="li"><span><b>${$esc(t.name)}</b><br><span class="mut">${t.first} ← ${t.last} (e1RM)</span></span>
+      <span class="${t.dir==="up"?"flag-up":t.dir==="down"?"flag-down":"flag-flat"}">${t.dir==="up"?"▲ رو به بالا":t.dir==="down"?"▼ افت":"■ ثابت"}</span></div>`).join(""):`<p class="empty">برای روند، حداقل دو جلسه از این بلوک لازم است.</p>`}
+  </div>
+  <button class="btn ghost" data-act="end-meso-early">پایان دادن بلوک (بازنگری)</button>`;
+}
+function mesoSessions(){
+  if(!S.meso)return[];
+  return S.history.filter(h=>new Date(h.date)>=new Date(S.meso.start+"T00:00:00"));
+}
+function trendsFor(){
+  const sess=mesoSessessions();
+  const agg={};
+  sess.forEach(h=>(h.exercises||[]).forEach(e=>{
+    const best=e.sets.filter(s=>+s.w>0&&+s.r>0).map(s=>e1rm(+s.w,+s.r));
+    if(!best.length)return;
+    (agg[e.exId]=agg[e.exId]||[]).push(Math.max(...best));
+  }));
+  const out=[];
+  Object.keys(agg).forEach(id=>{
+    const arr=agg[id];if(arr.length<2)return;
+    const half=Math.floor(arr.length/2);
+    const f=Math.max(...arr.slice(0,half)),l=Math.max(...arr.slice(half));
+    const chg=f?Math.round((l-f)/f*1000)/10:0;
+    out.push({name:(exById(id)||{}).n||id,first:Math.round(f),last:Math.round(l),
+      dir:chg>1.5?"up":chg<-1.5?"down":"flat"});
+  });
+  return out;
+}
+function mesoSessessions(){return mesoSessions();}
+function reviewHTML(){
+  const st=ui.reviewData;
+  const step=ui.reviewStep;
+  if(step===1){
+    const trends=trendsFor();
+    const sugMap={up:"حجم همین‌طور خوب است — می‌توانی +۱ ست هم بدهی",flat:"بدون تغییر یا +۱ ست",down:"+۲ ست به این عضله در بلوک بعد"};
+    return `<h2>بازنگری ۱/۳ — روند عضلات</h2>
+    <p class="mut" style="margin-bottom:10px">سیستم از لاگ بلوک پیشنهاد می‌دهد؛ می‌توانی تغییرش بدهی.</p>
+    ${MKORDER.map(k=>{
+      const t=trends.find(x=>x.mk===k)||null;
+      const dir=st.adj[k]??"flat";
+      return `<div class="li" style="flex-direction:column;align-items:stretch">
+        <div class="spread"><b>${MK[k]}</b><span class="mut">هدف فعلی: ${S.volumeTargets[k]} ست</span></div>
+        <div class="row" style="margin-top:6px">
+          ${[["up","▲ بالا"],["flat","■ ثابت"],["down","▼ افت"],["pain","✕ درد مفصل"]].map(o=>`
+            <button class="chip ${dir===o[0]?"on":""}" data-act="rev-set" data-k="${k}" data-v="${o[0]}">${o[1]}</button>`).join("")}
+        </div>
+        <span class="mut" style="font-size:11px">${dir==="pain"?"تعویض حرکات آن عضله + کاهش موقت":dir==="down"?"+۲ ست":dir==="up"?"+۰ تا ۱ ست اختیاری":"بدون تغییر"}</span>
+      </div>`;
+    }).join("")}
+    <button class="btn" style="margin-top:10px" data-act="rev-next">ادامه</button>`;
+  }
+  if(step===2){
+    return `<h2>بازنگری ۲/۳ — خستگی کلی</h2>
+    <p class="mut" style="margin-bottom:10px">در این بلوک چطور حست بود؟</p>
+    ${[["good","عالی — انرژی داشتم"],["ok","معمولی"],["tired","خسته بودم — خواب/استرس بد بود"]].map(o=>`
+      <button class="btn ghost" style="margin-bottom:8px;text-align:right;${st.sys===o[0]?"border-color:var(--acc);color:var(--acc)":""}" data-act="rev-sys" data-v="${o[0]}">${o[1]}</button>`).join("")}
+    ${st.sys==="tired"?`<p class="mut" style="margin-top:6px;color:var(--amber)">پیشنهاد: بلوک بعد با ۱۰٪ حجم کمتر شروع شود و خواب اولویت باشد.</p>`:""}
+    <button class="btn" style="margin-top:10px" data-act="rev-next">ادامه</button>`;
+  }
+  return `<h2>بازنگری ۳/۳ — تأیید</h2>
+  <p class="mut" style="margin-bottom:10px">تغییرات اعمال‌شده به اهداف بلوک بعد:</p>
+  ${Object.keys(st.adj||{}).filter(k=>st.adj[k]).map(k=>{
+    const delta=st.adj[k]==="down"?2:st.adj[k]==="up"?1:0;
+    const nt=clampTgt(k,S.volumeTargets[k]+delta-(st.adj[k]==="pain"?2:0));
+    return `<div class="li"><b>${MK[k]}</b><span class="mut">${S.volumeTargets[k]} → <b style="color:var(--acc)">${nt}</b> ست</span></div>`;
+  }).join("")||`<p class="empty">تغییری انتخاب نشد — همه اهداف حفظ می‌شوند.</p>`}
+  ${st.sys==="tired"?`<div class="li"><b>خستگی کلی</b><span class="mut">شروع بلوک بعد −۱۰٪ حجم</span></div>`:""}
+  <button class="btn" style="margin-top:10px" data-act="rev-apply">اعمال و شروع بلوک جدید</button>
+  <p class="mut" style="margin-top:8px">هفتهٔ اول بلوک جدید دلود (~۶۵٪) خواهد بود.</p>`;
+}
+function clampTgt(k,v){return Math.max(2,Math.min(30,v));}
+
+function vHistory(){
+  if(!S.history.length)return `<div class="card"><p class="empty">تاریخچه خالی است.</p></div>`;
+  return [...S.history].reverse().map(h=>{
+    const ci=h.checkin;
+    return `<div class="card">
+    <div class="spread"><b>${$esc(h.dayName)}</b><span class="mut">${fmtDate(h.date.slice(0,10))}</span></div>
+    <div class="row mut" style="margin:6px 0">${h.volume} کگ حجم • ${(h.exercises||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} ست • ${h.durationMin} دقیقه
+    ${ci?(ci.joint?` • <span class="pain">درد مفصل</span>`:"")+(ci.sore>=2?` • کوفتگی ${ci.sore}/۳`:""):""}</div>
+    ${(h.exercises||[]).map(e=>`<div class="li"><b>${$esc(e.name)}</b><span class="mut">${(e.sets||[]).map(s=>s.w?s.w+"×"+s.r+(s.rir!=null&&s.rir!==""?"@"+s.rir:""):(s.r+" تکرار")).join(" ، ")}</span></div>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+function vSettings(){
+  const wts=[...(S.weights||[])].reverse();
+  return `
+  <div class="card">
+    <h2>اهداف حجم هفتگی (ست)</h2>
+    ${MKORDER.map(k=>`<div class="li"><b>${MK[k]}</b>
+      <input type="number" min="2" max="30" value="${S.volumeTargets[k]}" data-tgt="${k}" style="width:80px;text-align:center"></div>`).join("")}
+    <p class="mut" style="margin-top:8px">تغییرات خودکار ذخیره می‌شود.</p>
+  </div>
+  <div class="card">
+    <div class="spread"><b>نمایش ستون RIR</b><button class="chip ${S.settings.rir?"on":""}" data-act="toggle-rir">${S.settings.rir?"روشن":"خاموش"}</button></div>
+    <p class="mut" style="margin-top:6px">RIR = تعداد تکراری که هنوز در مخزن داشتی. پیش‌فرض هر حرکت بر اساس نوعش پر می‌شود.</p>
+  </div>
+  <div class="card">
+    <h2>وزن بدن</h2>
+    <div class="row">
+      <input type="number" step="0.1" id="bw-in" placeholder="کیلوگرم" inputmode="decimal">
+      <button class="btn sm" data-act="save-bw" style="min-width:90px">ثبت</button>
+    </div>
+    ${wts.slice(0,8).map(w=>`<div class="li"><b>${w.kg} کگ</b><span class="mut">${fmtDate(w.date)}</span></div>`).join("")}
+  </div>
+  <div class="card">
+    <h2>پشتیبان‌گیری</h2>
+    <p class="mut" style="margin-bottom:10px">داده‌ها فقط روی همین دستگاه‌اند. گاهی پشتیبان بگیر.</p>
+    <button class="btn ghost" data-act="export">دانلود فایل پشتیبان</button>
+    <label class="btn ghost" style="display:block;text-align:center;margin-top:8px;cursor:pointer">بازیابی از فایل<input type="file" id="import-file" accept=".json" style="display:none"></label>
+    <button class="btn danger" style="margin-top:8px" data-act="wipe">پاک کردن همه داده‌ها</button>
+  </div>
+  <div class="card">
+    <h2>درباره</h2>
+    <p class="mut">جیم‌لاگ ۲ — ساخته‌شده بر اساس ۱۵ جزوهٔ علمی (RP، Flow High Performance، Huberman/Galpin): مسوسیکل ۴ هفته‌ای، RIR دسته‌ای، داشبورد حجم عضلانی با شمارش غیرمستقیم، ACWR، بازنگری واکنشی پایان بلوک. داده‌های نسخهٔ ۱ به‌طور خودکار منتقل شده‌اند.</p>
+  </div>`;
+}
+
+document.addEventListener("click",ev=>{
+  const el=ev.target.closest("[data-act]");
+  if(!el)return;
+  const act=el.dataset.act;
+  const s=S.activeSession;
+
+  if(act==="toggle-set"){
+    const i=+el.dataset.i,j=+el.dataset.j,row=el.closest("tr");
+    const g=r=>row.querySelector(`[data-role="${r}"]`);
+    s.exercises[i].sets[j]={w:g("w").value,r:g("r").value,rir:S.settings.rir?(g("rir")?g("rir").value:""):"",done:!s.exercises[i].sets[j].done};
+    save();render();
+    if(s.exercises[i].sets[j].done)startRest(90);
+    return;
+  }
+  if(act==="add-set"){
+    const i=+el.dataset.i,st=s.exercises[i].sets,last=st[st.length-1];
+    st.push({w:last?last.w:"",r:last?last.r:"",done:false});
+    save();render();return;
+  }
+  if(act==="del-exercise"){s.exercises.splice(+el.dataset.i,1);save();render();return;}
+  if(act==="add-exercise"){ui.pickerTarget="session";openModal(pickerEx());return;}
+  if(act==="ex-info"){
+    const lib=exById(s.exercises[+el.dataset.i].exId);if(!lib)return;
+    const yt=lib.vid?VIDBASE+lib.vid:"https://www.youtube.com/results?search_query="+encodeURIComponent(lib.n+" فرم صحیح");
+    openModal(`<h2>${$esc(lib.n)}</h2><p class="mut" style="margin-bottom:10px">${$esc(lib.eq)} • ${CLSN[lib.cls]}</p>
+    <p style="margin-bottom:14px">${$esc(lib.how)}</p>
+    <a class="btn" style="text-decoration:none;display:block;text-align:center" href="${yt}" target="_blank" rel="noopener">دیدن ویدیوی فرم</a>
+    <button class="btn ghost" style="margin-top:8px" data-act="close-modal">بستن</button>`);return;
+  }
+  if(act==="finish"){finishWorkout();return;}
+  if(act==="discard"){if(confirm("تمرین فعلی حذف شود؟")){S.activeSession=null;save();render();}return;}
+
+  if(act==="start-day"){const p=PROGRAM.find(x=>x.id===el.dataset.id);startSession(p.id,p.name,p.ex,isDeloadWeek());return;}
+  if(act==="start-suggested"){const p=nextDay();startSession(p.id,p.name,p.ex,isDeloadWeek());return;}
+  if(act==="pick-day"){
+    openModal(`<h2>انتخاب روز</h2>${PROGRAM.map(p=>`<button class="btn ghost" style="margin-top:8px;text-align:right" data-act="start-day" data-id="${p.id}">${$esc(p.name)}</button>`).join("")}
+    <button class="btn" style="margin-top:8px" data-act="start-free">تمرین آزاد</button>`);return;
+  }
+  if(act==="start-free"){ui.pickerTarget="free";ui.free=[];openModal(pickerEx());return;}
+  if(act==="choose-ex"){
+    if(ui.pickerTarget==="free"){
+      ui.free=ui.free||[];
+      if(!ui.free.includes(el.dataset.id)){ui.free.push(el.dataset.id);el.textContent="✓ شد";el.classList.add("on");}
+      return;
+    }
+    closeModal();
+    if(s){
+      const id=el.dataset.id,lib=exById(id),prev=lastSetsFor(id);
+      s.exercises.push({exId:id,name:lib.n,cls:lib.cls,target:3,
+        sets:(prev.length?prev.slice(0,3):[{w:"",r:""}]).map(x=>({w:x.w,r:x.r,done:false}))});
+      save();render();
+    }
+    return;
+  }
+
+  if(act==="start-meso"){
+    const w=Math.max(3,Math.min(8,+$("#meso-weeks").value||4));
+    S.meso={start:$("#meso-start").value||today(),weeks:w,deloadFirst:true};
+    save();render();toast("مسوسیکل شروع شد — هفته اول دلود");return;
+  }
+  if(act==="open-review"){ui.reviewStep=1;ui.reviewData={adj:{}};ui.tab="meso";render();
+    window.scrollTo(0,0);return;}
+  if(act==="end-meso-early"){ui.reviewStep=1;ui.reviewData={adj:{}};render();return;}
+  if(act==="rev-set"){ui.reviewData.adj[el.dataset.k]=el.dataset.v;render();
+    const mb=$("#modal-bg");/*re-render main behind*/return;}
+  if(act==="rev-sys"){ui.reviewData.sys=el.dataset.v;render();return;}
+  if(act==="rev-next"){ui.reviewStep++;render();window.scrollTo(0,0);return;}
+  if(act==="rev-apply"){
+    Object.keys(ui.reviewData.adj||{}).forEach(k=>{
+      const v=ui.reviewData.adj[k];
+      const delta=v==="down"?2:v==="up"?1:v==="pain"?-2:0;
+      S.volumeTargets[k]=clampTgt(k,(S.volumeTargets[k]||DEF_TGT[k])+delta);
+    });
+    S.meso={start:today(),weeks:S.meso?S.meso.weeks:4,deloadFirst:true};
+    ui.reviewStep=0;
+    save();render();toast("بلوک جدید شروع شد — هفته اول دلود");return;
+  }
+
+  if(act==="log-weight"){
+    openModal(`<h2>ثبت وزن بدن</h2><div class="row">
+      <input type="number" step="0.1" id="bw-modal" inputmode="decimal" placeholder="کیلوگرم">
+      <button class="btn" style="min-width:100px" data-act="save-bw-modal">ثبت</button></div>`);
+    setTimeout(()=>{const i=$("#bw-modal");if(i)i.focus();},50);return;
+  }
+  if(act==="save-bw-modal"){doSaveWeight($("#bw-modal").value);closeModal();return;}
+  if(act==="save-bw"){doSaveWeight($("#bw-in").value);return;}
+  if(act==="toggle-rir"){S.settings.rir=!S.settings.rir;save();render();return;}
+  if(act==="export"){
+    const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download="gymlog2-backup-"+today()+".json";a.click();URL.revokeObjectURL(a.href);return;
+  }
+  if(act==="wipe"){if(confirm("همه داده‌ها پاک شوند؟")){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);S=loadState();render();toast("پاک شد");}return;}
+  if(act==="close-modal"){closeModal();return;}
+  if(act==="go-workout"){ui.tab="workout";render();return;}
+  if(act==="timer-skip"){endRest(false);return;}
+  if(act==="timer-plus"){ui.rest+=15;return;}
+  if(act==="timer-minus"){ui.rest=Math.max(0,ui.rest-15);return;}
+});
+
+document.addEventListener("change",ev=>{
+  const el=ev.target;
+  if(el.dataset.tgt){S.volumeTargets[el.dataset.tgt]=clampTgt(el.dataset.tgt,+el.value||DEF_TGT[el.dataset.tgt]);save();return;}
+  if(el.id==="import-file"&&el.files[0]){
+    const fr=new FileReader();
+    fr.onload=()=>{try{
+      const d=JSON.parse(fr.result);
+      if(!d.history||!d.version)throw 0;
+      S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),d);
+      save();render();toast("بازیابی شد");
+    }catch(e){toast("فایل نامعتبر است");}};
+    fr.readAsText(el.files[0]);return;
+  }
+  if(["w","r","rir"].includes(el.dataset.role)){
+    const s=S.activeSession;
+    if(s){const st=s.exercises[+el.dataset.i].sets[+el.dataset.j];st[el.dataset.role]=el.value;}
+    save();
+  }
+});
+
+function pickerEx(){
+  const groups={};LIB.forEach(e=>{(groups[MK[e.mk]]=groups[MK[e.mk]]||[]).push(e)});
+  let html=`<h2>انتخاب حرکت</h2><input type="text" id="ex-search" placeholder="جستجو…" style="margin-bottom:10px"><div id="ex-list">`;
+  Object.keys(groups).forEach(g=>{
+    html+=`<div class="mut" style="margin:10px 0 2px">${g}</div>`+groups[g].map(e=>
+      `<div class="li"><b>${$esc(e.n)}</b><button class="btn sm" data-act="choose-ex" data-id="${e.id}">افزودن</button></div>`).join("");
+  });
+  return html+`</div>`;
+}
+
+document.addEventListener("input",ev=>{
+  const el=ev.target;
+  if(el.id==="ex-search"){
+    const q=el.value.trim();
+    const groups={};LIB.forEach(e=>{(groups[MK[e.mk]]=groups[MK[e.mk]]||[]).push(e)});
+    let html="";
+    Object.keys(groups).forEach(g=>{
+      const es=groups[g].filter(e=>!q||e.n.includes(q)||g.includes(q)||(e.eq||"").includes(q));
+      if(es.length)html+=`<div class="mut" style="margin:10px 0 2px">${g}</div>`+es.map(e=>
+        `<div class="li"><b>${$esc(e.n)}</b><button class="btn sm" data-act="choose-ex" data-id="${e.id}">افزودن</button></div>`).join("");
+    });
+    $("#ex-list").innerHTML=html||`<p class="empty">پیدا نشد.</p>`;
+  }
+});
+document.getElementById("modal-bg").addEventListener("click",ev=>{if(ev.target.id==="modal-bg")closeModal();});
+
+function startRest(sec){
+  clearInterval(ui.timerInt);ui.rest=sec;
+  const tb=$("#timerbar");tb.classList.add("open");
+  const tick=()=>{
+    if(ui.rest==null){tb.classList.remove("open");return;}
+    const m=Math.floor(ui.rest/60),s=ui.rest%60;
+    $("#timer-num").textContent=m+":"+String(s).padStart(2,"0");
+    if(ui.rest<=0)endRest(true);
+    ui.rest--;
+  };
+  tick();ui.timerInt=setInterval(tick,1000);
+}
+function endRest(done){
+  clearInterval(ui.timerInt);
+  $("#timerbar").classList.remove("open");
+  if(done&&navigator.vibrate)navigator.vibrate([200,100,200]);
+  ui.rest=null;
+}
+
+function finishWorkout(){
+  const s=S.activeSession;if(!s)return;
+  const used=s.exercises.filter(e=>e.sets.some(st=>st.w||st.r));
+  if(!used.length){toast("هیچ ست‌ای ثبت نشده!");return;}
+  used.forEach(e=>{
+    const best=e.sets.filter(st=>+st.w>0&&+st.r>0).sort((a,b)=>e1rm(+b.w,+b.r)-e1rm(+a.w,+a.r))[0];
+    if(best){const p=S.prs[e.exId];
+      if(!p||e1rm(+best.w,+best.r)>e1rm(p.w,p.r))S.prs[e.exId]={w:+best.w,r:+best.r,date:today()};}
+  });
+  const mins=Math.max(1,Math.round((Date.now()-new Date(s.startedAt).getTime())/60000));
+  S.history.push({
+    date:new Date().toISOString(),
+    dayId:s.dayId,dayName:s.dayName,durationMin:mins,deload:!!s.deload,
+    exercises:used.map(e=>({exId:e.exId,name:e.name,
+      sets:e.sets.filter(st=>st.w||st.r).map(st=>({w:+st.w||"",r:+st.r,rir:st.rir===""||st.rir==null?undefined:+st.rir}))})),
+    volume:volOf(s)
+  });
+  S.activeSession=null;save();endRest(false);
+  openModal(`<h2>چک-این سریع</h2>
+  <p class="mut" style="margin-bottom:8px">کوفتگی عضلانی امروز (۰ = هیچ، ۳ = شدید):</p>
+  <div class="row" id="ci-sore">${[0,1,2,3].map(v=>`<button class="chip ${v===0?"on":""}" data-ci-sore="${v}" style="flex:1;text-align:center">${v}</button>`).join("")}</div>
+  <div class="spread" style="margin:14px 0"><b>درد مفصل داشتی؟</b><button class="chip" data-ci-joint>نه</button></div>
+  <button class="btn" data-act="ci-save">ذخیره جلسه</button>`);
+  let sore=0,joint=false;
+  document.querySelector("[data-ci-sore]").addEventListener("click",()=>{});
+  $("#modal").querySelectorAll("[data-ci-sore]").forEach(b=>b.addEventListener("click",()=>{
+    sore=+b.dataset.ciSore;
+    $("#modal").querySelectorAll("[data-ci-sore]").forEach(x=>x.classList.toggle("on",x===b));
+  }));
+  const jb=$("#modal").querySelector("[data-ci-joint]");
+  jb.addEventListener("click",()=>{joint=!joint;jb.classList.toggle("on",joint);jb.textContent=joint?"بله":"نه";});
+  $("#modal").querySelector("[data-act='ci-save']").addEventListener("click",()=>{
+    S.history[S.history.length-1].checkin={sore,joint};save();closeModal();
+    ui.tab="volume";render();toast("ذخیره شد 💪");
+    const flags=[];
+    S.history.slice(-3).forEach(h=>{const c=h.checkin;if(c&&c.sore>=2)flags.push("کوفتگی");if(c&&c.joint)flags.push("درد مفصل");});
+    if(flags.length>=2)setTimeout(()=>toast("⚠️ چند جلسه اخیر علائم داشت — به بازنگری مسوسیکل سر بزن"),1200);
+  });
+}
+function doSaveWeight(v){
+  const kg=parseFloat(v);
+  if(!kg){toast("عدد معتبر وارد کن");return;}
+  S.weights=(S.weights||[]).filter(w=>w.date!==today());
+  S.weights.push({date:today(),kg});
+  S.weights.sort((a,b)=>a.date<b.date?-1:1);
+  save();render();toast("وزن ثبت شد");
+}
+
+render();
+</script>
+</body>
+</html>
