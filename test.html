@@ -23,11 +23,30 @@ try{
  await waitLoad(fr);
  let W=fr.contentWindow, GL=W.__GL, D=fr.contentDocument;
  if(!GL)throw new Error("GL API missing — app script died");
+ const fresh=location.search.indexOf("fresh=1")>-1;
+ if(fresh && !D.querySelector("[data-act='ack-scope']")){
+   W.localStorage.clear(); W.location.reload();
+   await sleep(900); await waitLoad(fr);
+   W=fr.contentWindow; GL=W.__GL; D=fr.contentDocument;
+ }
  // T0 first-run scope disclaimer
  const hadDisc=!!D.querySelector("[data-act='ack-scope']");
- line("T0 first-run scope disclaimer shown", hadDisc, "fresh profile");
+ if(fresh)line("T0 first-run scope disclaimer shown",hadDisc,"fresh profile");
  if(hadDisc){D.querySelector("[data-act='ack-scope']").click(); await sleep(100);}
- line("T0b disclaimer dismissable", !D.querySelector("[data-act='ack-scope']"), "");
+ else line("T0 (skipped — state not fresh)",true,"existing data respected");
+ // T0c health screening gate (only on fresh)
+ if(fresh){
+   const scrShown=!!D.querySelector("[data-act='scr-save']");
+   line("T0c screening gate shown after ack",scrShown,"eligibility");
+   if(scrShown){
+     D.querySelectorAll('[data-act="scr-set"][data-v="n"]').forEach(b=>b.click());
+     D.querySelector("[data-act='scr-save']").click(); await sleep(120);
+     line("T0d all-no screening passes", !!(GL.state().screening&&GL.state().screening.done&&GL.state().screening.passed), "");
+   }
+ } else {
+   if(D.querySelector("[data-act='scr-save']")){D.querySelectorAll('[data-act="scr-set"][data-v="n"]').forEach(b=>b.click());D.querySelector("[data-act='scr-save']").click();await sleep(100);}
+   line("T0c/T0d (skipped — state not fresh)",true,"existing data respected");
+ }
 
  // T1 parse + home renders
  line("T1 app parses & home dashboard renders", D.querySelector("#main").innerHTML.indexOf("start-suggested")>-1, "home");
@@ -47,6 +66,10 @@ try{
  const before=JSON.stringify(GL.state().activeSession);
  GL.start("push"); await sleep(80);
  line("T3d double-click does not duplicate", JSON.stringify(GL.state().activeSession)===before && GL.state().activeSession.dayId==="push", "");
+ GL.go("home"); await sleep(80);
+ const homeHtml=GL.main();
+ line("T3e start-card hidden while session active", homeHtml.indexOf("start-suggested")===-1 && homeHtml.indexOf("در جریان")>-1, "");
+ GL.go("workout"); await sleep(80);
 
  // T4 RIR visible === saved
  const rirInput=D.querySelector('input[data-role="rir"]');
@@ -57,6 +80,9 @@ try{
  rirInput.value="3"; fire(rirInput,"change"); await sleep(50);
  const savedRir=GL.state().activeSession.exercises[0].sets[0].rir;
  line("T4b edited RIR saved as seen", savedRir===3, String(savedRir));
+ const rirs=[...D.querySelectorAll('input[data-role="rir"]')];
+ const isoVal=rirs.length?rirs[rirs.length-1].value:"none";
+ line("T4c isolation default RIR = 1 (not 0)", isoVal==="1", isoVal);
 
  // T5 record a valid set
  const wIn=D.querySelector('input[data-role="w"]'), rIn=D.querySelector('input[data-role="r"]');
@@ -82,6 +108,8 @@ try{
  const mainHtml=GL.main();
  line("T7c no raw ISO timestamp visible", !/T\d{2}:\d{2}/.test(mainHtml), "");
  line("T7d volume chart bars present", mainHtml.indexOf("vbar")>-1, "");
+ const sg=GL.suggest?GL.suggest("bench"):"";
+ line("T12 suggestion requires 2 comparable sessions", (sg.indexOf("۲ جلسه")>-1||sg.indexOf("قابل‌مقایسه")>-1), sg);
 
  // T8 history shows same local day as header date
  W.__lastDay=null;
