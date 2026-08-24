@@ -294,24 +294,24 @@ function inManualDeload(){
 }
 function autoTune(){
   if(S.lastTune===today())return;
-  if(S.history.length<4){S.lastTune=today();save();return;}
+  if(S.history.length<6){S.lastTune=today();save();return;}
   const changes=[];
   MKORDER.forEach(k=>{
     const all=S.history.filter(h=>(h.exercises||[]).some(e=>{const l=exById(e.exId);return l&&l.mk===k;}));
-    const recent=all.slice(-3);
-    if(recent.length<3)return;
+    const recent=all.slice(-4);
+    if(recent.length<4)return;
     let soreHits=0;
-    all.slice(-2).forEach(h=>{if(h.checkin&&h.checkin.sore>=2)soreHits++;});
+    all.slice(-3).forEach(h=>{if(h.checkin&&h.checkin.sore>=2)soreHits++;});
     const bests=recent.map(h=>{let m=0;(h.exercises||[]).forEach(e=>{const l=exById(e.exId);if(l&&l.mk===k)e.sets.forEach(s=>{if(+s.w>0&&+s.r>0)m=Math.max(m,e1rm(+s.w,+s.r));});});return m;});
-    const grew=bests[2]>bests[0]*1.005,fell=bests[2]<bests[0]*0.995;
+    const grew=bests[3]>bests[0]*1.02,fell=bests[3]<bests[0]*0.98;
     const t=S.volumeTargets[k];
-    const jointHit=all.slice(-2).some(h=>h.checkin&&h.checkin.joint);
+    const jointHit=all.slice(-3).some(h=>h.checkin&&h.checkin.joint);
     if(soreHits>=2&&t>4){S.volumeTargets[k]=t-1;changes.push(MK[k]+" −۱ ست (کوفتگی تکراری)");}
     else if(jointHit&&fell&&t>6){S.volumeTargets[k]=t-1;changes.push(MK[k]+" −۱ ست (درد مفصل)");}
     else if(!grew&&!fell&&soreHits===0&&t<26){S.volumeTargets[k]=t+1;changes.push(MK[k]+" +۱ ست (بدون پیشرفت و بدون کوفتگی)");}
   });
   S.lastTune=today();
-  if(changes.length){S.tuneLog=(S.tuneLog||[]).concat([{date:today(),changes:changes}]).slice(-12);}
+  if(changes.length){S.tuneLog=(S.tuneLog||[]).concat([{date:today(),conf:"low",changes:changes}]).slice(-12);}
   save();
 }
 
@@ -373,6 +373,20 @@ function openModal(html){$("#modal").innerHTML=`<div class="grabber"></div>`+htm
 function closeModal(){stopAnim();$("#modal-bg").classList.remove("open");}
 
 function render(){
+  if(!S.disclaimerSeen){
+    document.querySelectorAll("#nav button").forEach(b=>b.classList.remove("on"));
+    const m=$("#main");
+    m.innerHTML=`<div class="card" style="border-color:var(--amber)">
+      <h2>قبل از شروع — دامنهٔ این اپ</h2>
+      <p style="margin-bottom:8px">جیم‌لاگ یک <b>دفتر ثبت و پیشنهاد تمرینی</b> برای <b>بزرگسالان سالم</b> است. مشاور پزشکی، تشخیص یا درمان نیست.</p>
+      <div class="li"><span><b style="color:var(--acc)">سبز</b><br><span class="mut">ادامهٔ معمول تمرین</span></span></div>
+      <div class="li"><span><b style="color:var(--amber)">زرد</b><br><span class="mut">درد تیز/روبه‌رشد، سرگیجه، خستگی غیرمعمول ← توقف و ارزیابی</span></span></div>
+      <div class="li"><span><b style="color:var(--red)">قرمز</b><br><span class="mut">درد قفسهٔ سینه، تنگی نفس، غش، ادرار تیره ← مراقبت فوری</span></span></div>
+      <p class="mut" style="margin-top:8px">این اپ آسیب را تشخیص نمی‌دهد، زمان بهبود وعده نمی‌دهد و جایگزین پزشک یا مربی واجد صلاحیت نیست. مکمل‌ها و پروتکل‌های ویژه فقط آموزش‌اند.</p>
+      <button class="btn" style="margin-top:10px" data-act="ack-scope">می‌فهمم — شروع کن</button>
+    </div>`;
+    return;
+  }
   $("#streak-n").textContent=streak();
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===ui.tab));
   const m=$("#main");
@@ -518,8 +532,8 @@ function vVolume(){
   const ws=weekSets();
   const r=acwr();
   return `
-  ${r!==null?`<div class="card"><div class="spread"><b>نسبت بار فعلی به میانگین</b><span class="chip ${r>1.5?"warn":""}">${r}×</span></div>
-  <p class="mut" style="margin-top:6px">${r>1.5?"⚠️ جهش بار — خطر مصدومیت. آرام افزایش بده.":r<0.6?"حجم خیلی کمتر از میانگین — اگر دلود نیستی، کمی بیشتر.":"محدوده امن ✅"}</p></div>`:""}
+  ${r!==null?`<div class="card"><div class="spread"><b>نشانگر تغییر بار هفتگی</b><span class="chip ${r>1.5?"warn":""}">${r}×</span></div>
+  <p class="mut" style="margin-top:6px">${r>1.5?"جهش بزرگ نسبت به میانگین — افزایش را آرام‌تر کن.":r<0.6?"کمتر از میانگین — اگر دلود نیستی، اشکالی ندارد.":"تغییر بار ملایم و تدریجی ✅"}</p></div>`:""}
   <div class="card">
     <h2>ست هفتگی به تفکیک عضله</h2>
     <p class="mut" style="margin-bottom:10px">هدف‌ها قابل ویرایش در تنظیمات. * = شمارش غیرمستقیم (۰٫۵ ست).</p>
@@ -608,7 +622,7 @@ function trendsFor(){
     const half=Math.floor(arr.length/2);
     const f=Math.max(...arr.slice(0,half)),l=Math.max(...arr.slice(half));
     const chg=f?Math.round((l-f)/f*1000)/10:0;
-    out.push({name:(exById(id)||{}).n||id,first:Math.round(f),last:Math.round(l),
+    out.push({name:(exById(id)||{}).n||id,mk:(exById(id)||{}).mk||"",first:Math.round(f),last:Math.round(l),
       dir:chg>1.5?"up":chg<-1.5?"down":"flat"});
   });
   return out;
@@ -623,15 +637,17 @@ function reviewHTML(){
     return `<h2>بازنگری ۱/۳ — روند عضلات</h2>
     <p class="mut" style="margin-bottom:10px">سیستم از لاگ بلوک پیشنهاد می‌دهد؛ می‌توانی تغییرش بدهی.</p>
     ${MKORDER.map(k=>{
-      const t=trends.find(x=>x.mk===k)||null;
-      const dir=st.adj[k]??"flat";
+      const tr=trends.find(x=>x.mk===k)||null;
+      const auto=tr?tr.dir:"flat";
+      const dir=st.adj&&st.adj[k]!==undefined?st.adj[k]:auto;
+      const ev=tr?("e1RM "+tr.first+" ← "+tr.last):"دادهٔ کافی این بلوک نیست";
       return `<div class="li" style="flex-direction:column;align-items:stretch">
         <div class="spread"><b>${MK[k]}</b><span class="mut">هدف فعلی: ${S.volumeTargets[k]} ست</span></div>
         <div class="row" style="margin-top:6px">
           ${[["up","▲ بالا"],["flat","■ ثابت"],["down","▼ افت"],["pain","✕ درد مفصل"]].map(o=>`
             <button class="chip ${dir===o[0]?"on":""}" data-act="rev-set" data-k="${k}" data-v="${o[0]}">${o[1]}</button>`).join("")}
         </div>
-        <span class="mut" style="font-size:11px">${dir==="pain"?"تعویض حرکات آن عضله + کاهش موقت":dir==="down"?"+۲ ست":dir==="up"?"+۰ تا ۱ ست اختیاری":"بدون تغییر"}</span>
+        <span class="mut" style="font-size:11px">${dir==="pain"?"تعویض حرکات آن عضله + کاهش موقت":dir==="down"?"+۲ ست":dir==="up"?"+۰ تا ۱ ست اختیاری":"بدون تغییر"} • از لاگ: ${ev}${tr?"":" (پیش‌فرض: ثابت)"}</span>
       </div>`;
     }).join("")}
     <button class="btn" style="margin-top:10px" data-act="rev-next">ادامه</button>`;
@@ -727,6 +743,7 @@ document.addEventListener("click",ev=>{
   }
   if(act==="del-exercise"){s.exercises.splice(+el.dataset.i,1);save();render();return;}
   if(act==="add-exercise"){ui.pickerTarget="session";openModal(pickerEx());return;}
+  if(act==="ack-scope"){S.disclaimerSeen=true;save();render();return;}
   if(act==="set-sleep"){
     S.readiness=S.readiness||{};
     S.readiness[today()]={sleep:+el.dataset.v};
@@ -808,9 +825,12 @@ document.addEventListener("click",ev=>{
       const delta=v==="down"?2:v==="up"?1:v==="pain"?-2:0;
       S.volumeTargets[k]=clampTgt(k,(S.volumeTargets[k]||DEF_TGT[k])+delta);
     });
+    if(ui.reviewData.sys==="tired"){
+      Object.keys(S.volumeTargets).forEach(k=>{S.volumeTargets[k]=Math.max(2,Math.round(S.volumeTargets[k]*0.9));});
+    }
     S.meso={start:today(),weeks:S.meso?S.meso.weeks:4,deloadFirst:true};
     ui.reviewStep=0;
-    save();render();toast("بلوک جدید شروع شد — هفته اول دلود");return;
+    save();render();toast("بلوک جدید — هفته اول دلود");return;
   }
 
   if(act==="log-weight"){
@@ -983,9 +1003,10 @@ window.__GL={
  rirDefault:(id)=>defRir(exById(id)),
  importJSON:(txt)=>{try{const d=JSON.parse(txt);if(!d.history||!d.version)throw 0;S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),d);save();render();return true;}catch(e){return false;}},
  exportJSON:()=>JSON.stringify(S),
- migrateProbe:(o)=>{const m=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);return{version:m.version,historyLen:(m.history||[]).length,hasTargets:!!m.volumeTargets,keptOldHistory:(m.history||[]).length};}
+ migrateProbe:(o)=>{const m=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);return{version:m.version,historyLen:(m.history||[]).length,hasTargets:!!m.volumeTargets,keptOldHistory:(m.history||[]).length};},
+ ackScope:()=>{S.disclaimerSeen=true;save();}
 };
-autoTune();
+try{autoTune();}catch(e){}
 render();
 </script>
 </body>
