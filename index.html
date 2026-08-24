@@ -562,6 +562,8 @@ function vSettings(){
 }
 
 document.addEventListener("click",ev=>{
+  const nb=ev.target.closest("[data-tab]");
+  if(nb){ui.tab=nb.dataset.tab;location.hash="tab-"+ui.tab;render();window.scrollTo(0,0);return;}
   const el=ev.target.closest("[data-act]");
   if(!el)return;
   const act=el.dataset.act;
@@ -774,6 +776,12 @@ function doSaveWeight(v){
   save();render();toast("وزن ثبت شد");
 }
 
+(function(){
+  const m=(location.hash||"").match(/^#tab-(\w+)/);
+  const q=(location.search||"").match(/[?&]tab=(\w+)/);
+  const t=(m&&m[1])||(q&&q[1]);
+  if(t&&["home","workout","volume","meso","history","settings"].includes(t))ui.tab=t;
+})();
 render();
 </script>
 </body>
