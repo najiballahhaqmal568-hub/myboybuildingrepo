@@ -2,6 +2,14 @@
 
 READ THIS FIRST if you are an AI agent asked to continue building this project. This file + `docs/knowledge/` contain everything you need. No other context is required.
 
+## KNOWLEDGE LIBRARY ACCESS (fetch this first)
+
+The full scientific library (23 notes, one document) is available as a single raw fetch:
+
+https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/KNOWLEDGE.md
+
+Per-file versions live under docs/knowledge/ (raw fetch works per file too). If you are reviewing GymLog's coaching logic, safety boundaries, or scientific claims — read KNOWLEDGE.md; it is the evidence base.
+
 ## What this project is
 
 **GymLog v2** (`index.html`) — a personal, scientific bodybuilding tracker built for and with **Najiballah Atal** (entrepreneur, Dari/Persian speaker, non-programmer; he decides, you implement end-to-end).
