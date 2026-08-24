@@ -39,12 +39,12 @@ try{
    const scrShown=!!D.querySelector("[data-act='scr-save']");
    line("T0c screening gate shown after ack",scrShown,"eligibility");
    if(scrShown){
-     for(let qi=0;qi<6;qi++){const b=D.querySelector('[data-act="scr-set"][data-i=""+qi+"[data-v="n"]');if(b)b.click();await sleep(25);}
+      for(let qi=0;qi<6;qi++){const b=D.querySelector('[data-act="scr-set"][data-i="'+qi+'"][data-v="n"]');if(b)b.click();await sleep(25);}
      D.querySelector("[data-act='scr-save']").click(); await sleep(120);
      line("T0d all-no screening passes", !!(GL.state().screening&&GL.state().screening.done&&GL.state().screening.passed), "");
    }
  } else {
-   if(D.querySelector("[data-act='scr-save'")){for(let qi=0;qi<6;qi++){const b=D.querySelector('[data-act="scr-set"][data-i=" + qi + '[data-v="n"]');if(b)b.click();await sleep(25);}D.querySelector("[data-act='scr-save']").click();await sleep(100);}
+    if(D.querySelector("[data-act='scr-save']")){for(let qi=0;qi<6;qi++){const b=D.querySelector('[data-act="scr-set"][data-i="'+qi+'"][data-v="n"]');if(b)b.click();await sleep(25);}D.querySelector("[data-act='scr-save']").click();await sleep(100);}
    line("T0c/T0d (skipped — state not fresh)",true,"existing data respected");
  }
 
