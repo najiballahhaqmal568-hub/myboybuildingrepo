@@ -248,6 +248,66 @@ function lastSetsFor(exId){
   }
   return [];
 }
+function lastPerf(exId){
+  for(let i=S.history.length-1;i>=0;i--){
+    const e=(S.history[i].exercises||[]).find(x=>x.exId===exId);
+    if(!e)continue;
+    const good=e.sets.filter(s=>+s.w>0&&+s.r>0);
+    if(good.length){
+      const w=Math.max(...good.map(s=>+s.w));
+      const r=Math.max(...good.filter(s=>+s.w===w).map(s=>+s.r));
+      return {w,r};
+    }
+  }
+  return null;
+}
+function suggestNext(exId){
+  const p=lastPerf(exId);if(!p)return "";
+  if(p.r<12)return "پیشنهاد: "+p.w+" کگ × "+(p.r+1)+" تکرار";
+  const nw=Math.round((p.w*1.05)*2)/2;
+  return "پیشنهاد: "+nw+" کگ × "+Math.max(6,p.r-3)+" تکرار";
+}
+function exSessions(exId){
+  return S.history.filter(h=>(h.exercises||[]).some(e=>e.exId===exId));
+}
+function isPlateaued(exId){
+  const arr=exSessions(exId).slice(-3).map(h=>{
+    let m=0;(h.exercises||[]).filter(e=>e.exId===exId).forEach(e=>e.sets.forEach(s=>{if(+s.w>0&&+s.r>0)m=Math.max(m,e1rm(+s.w,+s.r));}));
+    return m;
+  });
+  if(arr.length<3||arr.some(v=>!v))return false;
+  const chg=(arr[2]-arr[0])/arr[0];
+  return chg<0.01&&chg>-0.01;
+}
+function deloadFlagged(){
+  const L=S.history.slice(-2);
+  return L.length===2&&L.every(h=>h.checkin&&(h.checkin.sore>=2||h.checkin.joint));
+}
+function inManualDeload(){
+  return !!(S.manualDeload&&today()<=S.manualDeload);
+}
+function autoTune(){
+  if(S.lastTune===today())return;
+  if(S.history.length<4){S.lastTune=today();save();return;}
+  const changes=[];
+  MKORDER.forEach(k=>{
+    const all=S.history.filter(h=>(h.exercises||[]).some(e=>{const l=exById(e.exId);return l&&l.mk===k;}));
+    const recent=all.slice(-3);
+    if(recent.length<3)return;
+    let soreHits=0;
+    all.slice(-2).forEach(h=>{if(h.checkin&&h.checkin.sore>=2)soreHits++;});
+    const bests=recent.map(h=>{let m=0;(h.exercises||[]).forEach(e=>{const l=exById(e.exId);if(l&&l.mk===k)e.sets.forEach(s=>{if(+s.w>0&&+s.r>0)m=Math.max(m,e1rm(+s.w,+s.r));});});return m;});
+    const grew=bests[2]>bests[0]*1.005,fell=bests[2]<bests[0]*0.995;
+    const t=S.volumeTargets[k];
+    const jointHit=all.slice(-2).some(h=>h.checkin&&h.checkin.joint);
+    if(soreHits>=2&&t>4){S.volumeTargets[k]=t-1;changes.push(MK[k]+" −۱ ست (کوفتگی تکراری)");}
+    else if(jointHit&&fell&&t>6){S.volumeTargets[k]=t-1;changes.push(MK[k]+" −۱ ست (درد مفصل)");}
+    else if(!grew&&!fell&&soreHits===0&&t<26){S.volumeTargets[k]=t+1;changes.push(MK[k]+" +۱ ست (بدون پیشرفت و بدون کوفتگی)");}
+  });
+  S.lastTune=today();
+  if(changes.length){S.tuneLog=(S.tuneLog||[]).concat([{date:today(),changes:changes}]).slice(-12);}
+  save();
+}
 
 function mesoInfo(){
   if(!S.meso)return null;
@@ -256,7 +316,7 @@ function mesoInfo(){
   const week=Math.min(S.meso.weeks,Math.ceil(days/7));
   return {week,days,done:days>S.meso.weeks*7,...S.meso};
 }
-function isDeloadWeek(){const m=mesoInfo();return !!(m&&m.week===1&&m.deloadFirst);}
+function isDeloadWeek(){const m=mesoInfo();return !!(m&&m.week===1&&m.deloadFirst)||inManualDeload();}
 
 function weekSets(){
   const out={};MKORDER.forEach(k=>out[k]=0);
@@ -284,14 +344,18 @@ function acwr(){
 }
 
 function startSession(dayId,dayName,exList,deload){
+  const red=(S.readiness&&S.readiness[today()]&&S.readiness[today()].sleep<=1);
+  const soft=deload||inManualDeload();
   S.activeSession={
     dayId,dayName,startedAt:new Date().toISOString(),
-    deload:!!deload,
-    exercises:exList.map(([id,baseSets])=>{
+    deload:!!deload,red:red,
+    exercises:exList.map(([idRaw,baseSets])=>{
+      const id=(S.swaps&&S.swaps[idRaw])||idRaw;
       const lib=exById(id);const prev=lastSetsFor(id);
-      let sets=prev.length?prev.slice(0,Math.max(baseSets,prev.length)):[];
-      while(sets.length<(deload?Math.max(2,Math.round(baseSets/2)):baseSets))sets.push({w:"",r:""});
-      return {exId:id,name:lib.n,cls:lib.cls,target:deload?Math.max(2,Math.round(baseSets/2)):baseSets,
+      let tgt=soft||red?Math.max(2,Math.round(baseSets*(deload?0.5:0.75))):baseSets;
+      let sets=prev.length?prev.slice(0,Math.max(tgt,Math.min(prev.length,tgt+1))):[];
+      while(sets.length<tgt)sets.push({w:"",r:""});
+      return {exId:id,name:lib.n,cls:lib.cls,target:tgt,
         sets:sets.map(s=>({w:s.w,r:s.r,done:false}))};
     })
   };
@@ -320,7 +384,20 @@ function vHome(){
   const ws=weekSets();
   const top=MKORDER.filter(k=>ws[k]>0).sort((a,b)=>(ws[b]/(S.volumeTargets[b]||1))-(ws[a]/(S.volumeTargets[a]||1))).slice(0,3);
   const sess=S.activeSession;
+  const rd=S.readiness&&S.readiness[today()];
+  const dlFlag=!sess&&deloadFlagged()&&!inManualDeload();
   return `
+  ${!rd?`<div class="card" style="border-color:var(--blue)">
+    <b>خواب دیشب چطور بود؟</b>
+    <div class="row" style="margin-top:8px">
+      ${[["3","عالی"],["2","خوب"],["1","بد"],["0","فاجعه"]].map(o=>`<button class="chip" style="flex:1;text-align:center" data-act="set-sleep" data-v="${o[0]}">${o[1]}</button>`).join("")}
+    </div>
+  </div>`:(rd.sleep<=1?`<div class="card" style="border-color:var(--amber)"><b>روز بازیابی 😴</b><p class="mut" style="margin-top:4px">خواب دیروز بد بود — امروز RIR +۱ و ست‌ها ~۲۵٪ کمتر پیشنهاد می‌شود. یا استراحت کامل.</p></div>`:"")}
+  ${dlFlag?`<div class="card" style="border-color:var(--red)">
+    <b style="color:var(--red)">پیشنهاد دلود</b>
+    <p class="mut" style="margin-top:4px">دو جلسهٔ اخیر علائم منفی داشتند (کوفتگی/مفصل). یک هفته با نصف حجم برو تا ریکاور کنی.</p>
+    <button class="btn" style="margin-top:10px" data-act="start-deload">شروع دلود ۷ روزه</button>
+  </div>`:""}
   ${mi?`<div class="card" style="border-color:${mi.done?"var(--amber)":"var(--acc)"}">
     <div class="spread"><b>${mi.done?"مسوسیکل تمام شد — بازنگری لازم":"مسوسیکل فعال"}</b><span class="chip">${mi.week} از ${mi.weeks}</span></div>
     ${mi.deloadFirst&&mi.week===1?`<p class="mut" style="margin-top:6px">این هفته دلود است — ست‌ها نصف شده‌اند.</p>`:""}
@@ -404,7 +481,8 @@ function exCard(e,i){
   return `<div class="card">
     <div class="exhead spread">
       <div><span class="exname" style="font-weight:800;cursor:pointer" data-act="ex-info" data-i="${i}">${$esc(e.name)} ⌄</span><br>
-      <span class="exmeta mut">${lib?$esc(lib.eq)+" • "+CLSN[lib.cls]:""}${prTxt?" • <span class='pr'>رکورد "+prTxt+"</span>":""}</span></div>
+      <span class="exmeta mut">${lib?$esc(lib.eq)+" • "+CLSN[lib.cls]:""}${prTxt?" • <span class='pr'>رکورد "+prTxt+"</span>":""}</span><br>
+      ${suggestNext(e.exId)?`<span class="chip on" style="margin-top:4px;display:inline-block;font-size:11.5px">${suggestNext(e.exId)}</span>`:""}</div>
       <button class="btn ghost sm" data-act="del-exercise" data-i="${i}">✕</button>
     </div>
     <table class="sets"><thead><tr><th style="width:30px">ست</th><th>وزن</th><th>تکرار</th>${S.settings.rir?"<th>RIR</th>":""}<th style="width:40px">✓</th></tr></thead><tbody>
@@ -493,9 +571,15 @@ function vMeso(){
   </div>
   <div class="card">
     <h2>روند حرکات این بلوک</h2>
-    ${trends.length?trends.map(t=>`
-      <div class="li"><span><b>${$esc(t.name)}</b><br><span class="mut">${t.first} ← ${t.last} (e1RM)</span></span>
-      <span class="${t.dir==="up"?"flag-up":t.dir==="down"?"flag-down":"flag-flat"}">${t.dir==="up"?"▲ رو به بالا":t.dir==="down"?"▼ افت":"■ ثابت"}</span></div>`).join(""):`<p class="empty">برای روند، حداقل دو جلسه از این بلوک لازم است.</p>`}
+    ${trends.length?trends.map(t=>{
+      const lib=LIB.find(x=>x.n===t.name);
+      const plat=t.dir!=="up"&&lib&&isPlateaued(lib.id);
+      return `<div class="li"><span><b>${$esc(t.name)}</b><br><span class="mut">${t.first} ← ${t.last} (e1RM)</span></span>
+      <span class="row">
+      <span class="${t.dir==="up"?"flag-up":t.dir==="down"?"flag-down":"flag-flat"}">${t.dir==="up"?"▲":t.dir==="down"?"▼":"■"}</span>
+      ${plat?`<button class="btn ghost sm" data-act="swap-start" data-id="${lib.id}">فلات — تعویض</button>`:""}
+      </span></div>`;
+    }).join(""):`<p class="empty">برای روند، حداقل دو جلسه از این بلوک لازم است.</p>`}
   </div>
   <button class="btn ghost" data-act="end-meso-early">پایان دادن بلوک (بازنگری)</button>`;
 }
@@ -636,6 +720,24 @@ document.addEventListener("click",ev=>{
   }
   if(act==="del-exercise"){s.exercises.splice(+el.dataset.i,1);save();render();return;}
   if(act==="add-exercise"){ui.pickerTarget="session";openModal(pickerEx());return;}
+  if(act==="set-sleep"){
+    S.readiness=S.readiness||{};
+    S.readiness[today()]={sleep:+el.dataset.v};
+    save();render();
+    if(+el.dataset.v<=1)toast("روز بازیابی — امروز ملایم‌تر تمرین کن");
+    return;
+  }
+  if(act==="start-deload"){
+    const d=new Date();d.setDate(d.getDate()+7);
+    S.manualDeload=today(d);
+    save();render();toast("دلود ۷ روزه فعال شد — ست‌ها نصف");return;
+  }
+  if(act==="swap-start"){
+    ui.pickerTarget="swap:"+el.dataset.id;
+    const lib=exById(el.dataset.id);
+    openModal(`<h2>تعویض ${$esc(lib.n)}</h2><p class="mut" style="margin-bottom:10px">حرکت هم‌عضله را انتخاب کن (فلات را بشکن):</p><div id="ex-list">${exListFiltered(lib.mk,lib.id,"")}</div>`);
+    return;
+  }
   if(act==="ex-info"){
     const lib=exById(s.exercises[+el.dataset.i].exId);if(!lib)return;
     const yt=lib.vid?VIDBASE+lib.vid:"https://www.youtube.com/results?search_query="+encodeURIComponent(lib.n+" فرم صحیح");
@@ -659,6 +761,14 @@ document.addEventListener("click",ev=>{
   }
   if(act==="start-free"){ui.pickerTarget="free";ui.free=[];openModal(pickerEx());return;}
   if(act==="choose-ex"){
+    if(ui.pickerTarget&&ui.pickerTarget.indexOf("swap:")===0){
+      const oldId=ui.pickerTarget.slice(5);
+      S.swaps=S.swaps||{};
+      S.swaps[oldId]=el.dataset.id;
+      save();closeModal();render();
+      toast("تعویض شد — از جلسه بعد اعمال می‌شود");
+      return;
+    }
     if(ui.pickerTarget==="free"){
       ui.free=ui.free||[];
       if(!ui.free.includes(el.dataset.id)){ui.free.push(el.dataset.id);el.textContent="✓ شد";el.classList.add("on");}
@@ -739,6 +849,10 @@ document.addEventListener("change",ev=>{
   }
 });
 
+function exListFiltered(mk,excludeId,q){
+  const es=LIB.filter(e=>e.mk===mk&&e.id!==excludeId&&(!q||e.n.includes(q)||(e.eq||"").includes(q)));
+  return es.map(e=>`<div class="li"><b>${$esc(e.n)}</b><button class="btn sm" data-act="choose-ex" data-id="${e.id}">این را بگذار</button></div>`).join("")||`<p class="empty">گزینه‌ای نیست.</p>`;
+}
 function pickerEx(){
   const groups={};LIB.forEach(e=>{(groups[MK[e.mk]]=groups[MK[e.mk]]||[]).push(e)});
   let html=`<h2>انتخاب حرکت</h2><input type="text" id="ex-search" placeholder="جستجو…" style="margin-bottom:10px"><div id="ex-list">`;
@@ -753,13 +867,22 @@ document.addEventListener("input",ev=>{
   const el=ev.target;
   if(el.id==="ex-search"){
     const q=el.value.trim();
-    const groups={};LIB.forEach(e=>{(groups[MK[e.mk]]=groups[MK[e.mk]]||[]).push(e)});
     let html="";
-    Object.keys(groups).forEach(g=>{
-      const es=groups[g].filter(e=>!q||e.n.includes(q)||g.includes(q)||(e.eq||"").includes(q));
-      if(es.length)html+=`<div class="mut" style="margin:10px 0 2px">${g}</div>`+es.map(e=>
-        `<div class="li"><b>${$esc(e.n)}</b><button class="btn sm" data-act="choose-ex" data-id="${e.id}">افزودن</button></div>`).join("");
-    });
+    if(ui.pickerTarget&&ui.pickerTarget.indexOf("swap:")===0){
+      const oldId=ui.pickerTarget.slice(5);
+      const lib=exById(oldId);
+      html=exListFiltered(lib?lib.mk:"back",oldId,q);
+    }else{
+      const groups={};LIB.forEach(e=>{(groups[MK[e.mk]]=groups[MK[e.mk]]||[]).push(e)});
+      Object.keys(groups).forEach(g=>{
+        const es=groups[g].filter(e=>!q||e.n.includes(q)||g.includes(q)||(e.eq||"").includes(q));
+        if(es.length)html+=`<div class="mut" style="margin:10px 0 2px">${g}</div>`+es.map(e=>
+          `<div class="li"><b>${$esc(e.n)}</b><button class="btn sm" data-act="choose-ex" data-id="${e.id}">افزودن</button></div>`).join("");
+      });
+    }
+    $("#ex-list").innerHTML=html||`<p class="empty">پیدا نشد.</p>`;
+  }
+});
     $("#ex-list").innerHTML=html||`<p class="empty">پیدا نشد.</p>`;
   }
 });
@@ -836,8 +959,9 @@ function doSaveWeight(v){
   const m=(location.hash||"").match(/^#tab-(\w+)/);
   const q=(location.search||"").match(/[?&]tab=(\w+)/);
   const t=(m&&m[1])||(q&&q[1]);
-  if(t&&["home","workout","volume","meso","history","knowledge","settings"].includes(t))ui.tab=t;
+  if(t&&["home","workout","volume","meso","history","settings"].includes(t))ui.tab=t;
 })();
+try{autoTune();}catch(e){}
 render();
 </script>
 </body>
