@@ -1,4 +1,22 @@
-﻿# GYMLOG v2 — COMPLETE SCIENTIFIC KNOWLEDGE LIBRARY
+﻿# ⚠️ EVIDENCE LAYER NOTICE — READ FIRST (2026-08-24 audit)
+
+These notes are distilled from practitioner videos and single studies. Treat every number as a **starting hypothesis**, not a universal law. Evidence quality is mixed: practitioner opinion, EMG, single trials, and meta-analyses appear side by side.
+
+Key corrections from the 2026-08-24 external audit (with primary sources):
+- Volume ranges (10–20, MRV 18–30, 52-set outliers) are individual starting points, not laws. ACSM position stand: https://pubmed.ncbi.nlm.nih.gov/41843416/ · weekly-volume review: https://pubmed.ncbi.nlm.nih.gov/27433992/
+- Proximity to failure: failure not required for growth; RIR estimation is error-prone (esp. novices/light loads). https://pubmed.ncbi.nlm.nih.gov/36334240/ · https://pubmed.ncbi.nlm.nih.gov/33337690/
+- Protein: ~1.6 g/kg/day breakpoint meta-analysis; 1 g/lb is an upper end, not a requirement. https://pubmed.ncbi.nlm.nih.gov/28698222/
+- Cold-water immersion immediately post-lifting may blunt hypertrophy — effect is context-dependent, not an absolute ban. https://pubmed.ncbi.nlm.nih.gov/35068365/
+- Deloads are a low-research, consensus-defined stress-management tool, not a fixed calendar. https://pubmed.ncbi.nlm.nih.gov/37730925/
+- "Overtraining is almost nonexistent" and 52-set claims: single-population findings — do not generalize; individual fatigue governs.
+- Sleep/protein doubling after one bad night, mouth taping (https://pubmed.ncbi.nlm.nih.gov/40397877/ — limited evidence, asphyxiation risk with nasal blockage), RHR>75 pseudo-diagnosis, FFMI urgency, ketones after head trauma (use CDC red-flag path: https://www.cdc.gov/traumatic-brain-injury/signs-symptoms/index.html), and precise supplement-effect promises: treat as hypotheses or remove from product decisions.
+- BFR and supplement dosing require individual screening and qualified supervision (AIS BFR guide; https://pubmed.ncbi.nlm.nih.gov/31710505/ · NIH ODS magnesium/omega-3 fact sheets). Hydration needs are individual (NATA: https://pubmed.ncbi.nlm.nih.gov/28985128/).
+- ACWR is a load-change indicator, not a validated injury predictor (https://pubmed.ncbi.nlm.nih.gov/32572824/ · https://pubmed.ncbi.nlm.nih.gov/32502973/).
+
+Conflicting-school rules (RIR strategy, deload placement, volume counting) are decided in POLICY.md — the engine implements one protocol; alternatives here are labeled options.
+
+---
+# GYMLOG v2 — COMPLETE SCIENTIFIC KNOWLEDGE LIBRARY
 
 Consolidated from 23 research notes distilled from 19 playlists (~320 videos) across Renaissance Periodization, Flow High Performance, and Huberman/Galpin. This is the evidence base behind every GymLog v2 feature. Generated 2026-08-23.
 
