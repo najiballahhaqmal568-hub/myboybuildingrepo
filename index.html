@@ -850,7 +850,10 @@ document.addEventListener("change",ev=>{
   }
   if(["w","r","rir"].includes(el.dataset.role)){
     const s=S.activeSession;
-    if(s){const st=s.exercises[+el.dataset.i].sets[+el.dataset.j];st[el.dataset.role]=el.value;}
+    if(s){
+      const st=s.exercises[+el.dataset.i].sets[+el.dataset.j];
+      st[el.dataset.role]=el.dataset.role==="rir"?(el.value===""?"":+el.value):el.value;
+    }
     save();
   }
 });
