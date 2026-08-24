@@ -11,7 +11,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f1115;--card:#171a21;--card2:#1d212b;--line:#262b37;--txt:#e7e9ee;--mut:#8b93a3;--acc:#a3e635;--acc-dim:#84cc16;--red:#f87171;--blue:#60a5fa;--amber:#fbbf24}
+:root{--bg:#0f1115;--card:#171a21;--card2:#1d212b;--line:#262b37;--txt:#e7e9ee;--mut:#8b93a3;--acc:#a3e635;--acc-dim:#84cc16;--red:#f87171;--blue:#60a5fa;--amber:#fbbf24;color-scheme:dark}
+#nav button:disabled{opacity:.35;pointer-events:none}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:"Vazirmatn",Tahoma,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:80px;font-size:15px;line-height:1.6}
 input,select,button{font-family:inherit;font-size:inherit;color:inherit}
@@ -261,17 +262,24 @@ function lastPerf(exId){
     const good=e.sets.filter(s=>+s.w>0&&+s.r>0);
     if(good.length){
       const w=Math.max(...good.map(s=>+s.w));
-      const r=Math.max(...good.filter(s=>+s.w===w).map(s=>+s.r));
-      return {w,r};
+      const tops=good.filter(s=>+s.w===w);
+      const r=Math.max(...tops.map(s=>+s.r));
+      const rt=tops.find(s=>s.rir!==undefined&&s.rir!==null&&s.rir!=="");
+      return {w,r,rir:rt?(+rt.rir):null};
     }
   }
   return null;
 }
 function suggestNext(exId){
+  const lib=exById(exId);const tgt=lib?defRir(lib):1;
   const p=lastPerf(exId);if(!p)return "";
-  if(p.r<12)return "پیشنهاد: "+p.w+" کگ × "+(p.r+1)+" تکرار";
+  const pre="پیشنهاد: ";
+  if(p.rir===null)return pre+"همان "+p.w+" کگ — این جلسه RIR ثبت کن";
+  if(p.rir>tgt+1)return pre+p.w+" کگ × "+(p.r+2)+" (سبک‌تر از هدف بود)";
+  if(p.rir<tgt-1)return pre+p.w+" کگ × "+Math.max(1,p.r-1)+" (سنگین‌تر از هدف بود)";
+  if(p.r<12)return pre+p.w+" کگ × "+(p.r+1)+" تکرار";
   const nw=Math.round((p.w*1.05)*2)/2;
-  return "پیشنهاد: "+nw+" کگ × "+Math.max(6,p.r-3)+" تکرار";
+  return pre+nw+" کگ × "+Math.max(6,p.r-3)+" تکرار";
 }
 function exSessions(exId){
   return S.history.filter(h=>(h.exercises||[]).some(e=>e.exId===exId));
@@ -295,7 +303,7 @@ function inManualDeload(){
 function autoTune(){
   if(S.lastTune===today())return;
   if(S.history.length<6){S.lastTune=today();save();return;}
-  const changes=[];
+  const proposals=[];
   MKORDER.forEach(k=>{
     const all=S.history.filter(h=>(h.exercises||[]).some(e=>{const l=exById(e.exId);return l&&l.mk===k;}));
     const recent=all.slice(-4);
@@ -305,13 +313,13 @@ function autoTune(){
     const bests=recent.map(h=>{let m=0;(h.exercises||[]).forEach(e=>{const l=exById(e.exId);if(l&&l.mk===k)e.sets.forEach(s=>{if(+s.w>0&&+s.r>0)m=Math.max(m,e1rm(+s.w,+s.r));});});return m;});
     const grew=bests[3]>bests[0]*1.02,fell=bests[3]<bests[0]*0.98;
     const t=S.volumeTargets[k];
-    const jointHit=all.slice(-3).some(h=>h.checkin&&h.checkin.joint);
-    if(soreHits>=2&&t>4){S.volumeTargets[k]=t-1;changes.push(MK[k]+" −۱ ست (کوفتگی تکراری)");}
-    else if(jointHit&&fell&&t>6){S.volumeTargets[k]=t-1;changes.push(MK[k]+" −۱ ست (درد مفصل)");}
-    else if(!grew&&!fell&&soreHits===0&&t<26){S.volumeTargets[k]=t+1;changes.push(MK[k]+" +۱ ست (بدون پیشرفت و بدون کوفتگی)");}
+    const jointHit=all.slice(-3).some(h=>h.checkin&&h.checkin.joint&&Array.isArray(h.checkin.jointAreas)&&h.checkin.jointAreas.includes(k));
+    if(soreHits>=2&&t>4)proposals.push({k,delta:-1,reason:"کوفتگی تکراری"});
+    else if(jointHit&&fell&&t>6)proposals.push({k,delta:-1,reason:"درد مفصل همان ناحیه"});
+    else if(!grew&&!fell&&soreHits===0&&t<26)proposals.push({k,delta:1,reason:"بدون پیشرفت و بدون کوفتگی"});
   });
   S.lastTune=today();
-  if(changes.length){S.tuneLog=(S.tuneLog||[]).concat([{date:today(),conf:"low",changes:changes}]).slice(-12);}
+  if(proposals.length)S.pendingTune={date:today(),items:proposals};
   save();
 }
 
@@ -374,6 +382,7 @@ function closeModal(){stopAnim();$("#modal-bg").classList.remove("open");}
 
 function render(){
   if(!S.disclaimerSeen){
+    document.querySelectorAll("#nav button").forEach(b=>{b.disabled=true;});
     document.querySelectorAll("#nav button").forEach(b=>b.classList.remove("on"));
     const m=$("#main");
     m.innerHTML=`<div class="card" style="border-color:var(--amber)">
@@ -388,7 +397,7 @@ function render(){
     return;
   }
   $("#streak-n").textContent=streak();
-  document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===ui.tab));
+  document.querySelectorAll("#nav button").forEach(b=>{b.disabled=false;b.classList.toggle("on",b.dataset.tab===ui.tab);});
   const m=$("#main");
   if(ui.tab==="home")m.innerHTML=vHome();
   else if(ui.tab==="workout")m.innerHTML=vWorkout();
@@ -407,11 +416,20 @@ function vHome(){
   const sess=S.activeSession;
   const rd=S.readiness&&S.readiness[today()];
   const dlFlag=!sess&&deloadFlagged()&&!inManualDeload();
+  const pt=S.pendingTune;
   return `
+  ${pt?`<div class="card" style="border-color:var(--blue)">
+    <b>پیشنهاد تنظیم حجم</b><span class="chip" style="margin-right:6px">اطمینان پایین</span>
+    ${pt.items.map(it=>`<div class="li"><b>${MK[it.k]}</b><span class="mut">${it.delta>0?"+۱ ست":"−۱ ست"} • ${it.reason}</span></div>`).join("")}
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-act="tune-accept">قبول</button>
+      <button class="btn ghost" data-act="tune-reject">رد</button>
+    </div>
+  </div>`:""}
   ${!rd?`<div class="card" style="border-color:var(--blue)">
     <b>خواب دیشب چطور بود؟</b>
     <div class="row" style="margin-top:8px">
-      ${[["3","عالی"],["2","خوب"],["1","بد"],["0","فاجعه"]].map(o=>`<button class="chip" style="flex:1;text-align:center" data-act="set-sleep" data-v="${o[0]}">${o[1]}</button>`).join("")}
+      ${[["3","عالی"],["2","خوب"],["1","بد"],["0","فاجعه"]].map(o=>`<button class="chip" style="flex:1;text-align:center" data-act="set-sleep" data-v="${o[0]}">${o[1]}</button>`).join("")} <span class="mut" style="display:block;margin-top:6px">بد خواب = امروز ست‌ها ~۲۵٪ کمتر و RIR +۱ پیشنهاد می‌شود.</span>
     </div>
   </div>`:(rd.sleep<=1?`<div class="card" style="border-color:var(--amber)"><b>روز بازیابی 😴</b><p class="mut" style="margin-top:4px">خواب دیروز بد بود — امروز RIR +۱ و ست‌ها ~۲۵٪ کمتر پیشنهاد می‌شود. یا استراحت کامل.</p></div>`:"")}
   ${dlFlag?`<div class="card" style="border-color:var(--red)">
@@ -437,7 +455,7 @@ function vHome(){
   <div class="card">
     <h2>حجم هفته (۷ روز اخیر)</h2>
     ${top.length?top.map(k=>`
-      <div class="vbar"><div class="spread"><span>${MK[k]}${indirectNote(k)}</span><span class="mut">${ws[k]} / ${S.volumeTargets[k]} ست</span></div>
+      <div class="vbar"><div class="spread"><span>${MK[k]}${indirectNote(k)}</span><span class="mut">${faNum(ws[k])} از ${faNum(S.volumeTargets[k])} ست</span></div>
       <div class="bar"><i style="width:${Math.min(100,ws[k]/(S.volumeTargets[k]||1)*100)}%"></i></div></div>`).join(""):`<p class="empty">هنوز ست‌ای این هفته ثبت نشده.</p>`}
   </div>
   <div class="card">
@@ -504,15 +522,15 @@ function exCard(e,i){
       <div><span class="exname" style="font-weight:800;cursor:pointer" data-act="ex-info" data-i="${i}">${$esc(e.name)} ⌄</span><br>
       <span class="exmeta mut">${lib?$esc(lib.eq)+" • "+CLSN[lib.cls]:""}${prTxt?" • <span class='pr'>رکورد "+prTxt+"</span>":""}</span><br>
       ${suggestNext(e.exId)?`<span class="chip on" style="margin-top:4px;display:inline-block;font-size:11.5px">${suggestNext(e.exId)}</span>`:""}</div>
-      <button class="btn ghost sm" data-act="del-exercise" data-i="${i}">✕</button>
+      <button class="btn ghost sm" aria-label="حذف حرکت" data-act="del-exercise" data-i="${i}">✕</button>
     </div>
     <table class="sets"><thead><tr><th style="width:30px">ست</th><th>وزن</th><th>تکرار</th>${S.settings.rir?"<th>RIR</th>":""}<th style="width:40px">✓</th></tr></thead><tbody>
     ${e.sets.map((st,j)=>`<tr class="${st.done?"setdone":""}">
       <td style="text-align:center;color:var(--mut)">${j+1}</td>
-      <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${st.w}" data-role="w" data-i="${i}" data-j="${j}"></td>
-      <td><input type="number" min="0" inputmode="numeric" value="${st.r}" data-role="r" data-i="${i}" data-j="${j}"></td>
-      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir===""||st.rir===undefined||st.rir===null?defRir(lib):st.rir}" title="هدف RIR" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
-      <td style="text-align:center"><button class="done-btn ${st.done?"did":""}" data-act="toggle-set" data-i="${i}" data-j="${j}">✓</button></td>
+      <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${st.w}" aria-label="وزن ست ${j+1} به کیلوگرم" data-role="w" data-i="${i}" data-j="${j}"></td>
+      <td><input type="number" min="0" inputmode="numeric" value="${st.r}" aria-label="تکرارهای ست ${j+1}" data-role="r" data-i="${i}" data-j="${j}"></td>
+      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir===""||st.rir===undefined||st.rir===null?defRir(lib):st.rir}" aria-label="RIR هدف ست ${j+1}" title="هدف RIR" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
+      <td style="text-align:center"><button class="done-btn ${st.done?"did":""}" aria-label="ثبت ست ${j+1}" data-act="toggle-set" data-i="${i}" data-j="${j}">✓</button></td>
     </tr>`).join("")}
     </tbody></table>
     <div class="row" style="margin-top:8px">
@@ -533,7 +551,7 @@ function vVolume(){
   const r=acwr();
   return `
   ${r!==null?`<div class="card"><div class="spread"><b>نشانگر تغییر بار هفتگی</b><span class="chip ${r>1.5?"warn":""}">${r}×</span></div>
-  <p class="mut" style="margin-top:6px">${r>1.5?"جهش بزرگ نسبت به میانگین — افزایش را آرام‌تر کن.":r<0.6?"کمتر از میانگین — اگر دلود نیستی، اشکالی ندارد.":"تغییر بار ملایم و تدریجی ✅"}</p></div>`:""}
+  <p class="mut" style="margin-top:6px">${r>1.5?"جهش بزرگ نسبت به میانگین (آستانهٔ ۱٫۵ سرانگشتی است، نه قانون) — افزایش را آرام‌تر کن.":r<0.6?"کمتر از میانگین — اگر دلود نیستی، اشکالی ندارد.":"تغییر بار ملایم و تدریجی ✅"}</p></div>`:""}
   <div class="card">
     <h2>ست هفتگی به تفکیک عضله</h2>
     <p class="mut" style="margin-bottom:10px">هدف‌ها قابل ویرایش در تنظیمات. * = شمارش غیرمستقیم (۰٫۵ ست).</p>
@@ -541,7 +559,7 @@ function vVolume(){
       const t=S.volumeTargets[k]||0;const v=ws[k]||0;
       const pct=t?Math.min(100,v/t*100):(v?100:0);
       const col=v>t*1.35?"var(--red)":(v>=t*0.85?"var(--acc)":"var(--blue)");
-      return `<div class="vbar"><div class="spread"><span>${MK[k]}${indirectNote(k)}</span><span class="mut">${v} / ${t}</span></div>
+      return `<div class="vbar"><div class="spread"><span>${MK[k]}${indirectNote(k)}</span><span class="mut">${faNum(v)} از ${faNum(t)} ست</span></div>
       <div class="bar"><i style="width:${pct}%;background:${col}"></i></div></div>`;
     }).join("")}
   </div>
@@ -716,7 +734,8 @@ function vSettings(){
   </div>
   <div class="card">
     <h2>درباره</h2>
-    <p class="mut">جیم‌لاگ ۲ — ساخته‌شده بر اساس ۱۵ جزوهٔ علمی (RP، Flow High Performance، Huberman/Galpin): مسوسیکل ۴ هفته‌ای، RIR دسته‌ای، داشبورد حجم عضلانی با شمارش غیرمستقیم، ACWR، بازنگری واکنشی پایان بلوک. داده‌های نسخهٔ ۱ به‌طور خودکار منتقل شده‌اند.</p>
+    <p class="mut">نسخهٔ ۲٫۱ · مبتنی بر ۲۳ سند علمی تدوین‌شده از Renaissance Periodization، Flow High Performance و Huberman/Galpin · آخرین بازبینی شواهد: ۲۰۲۶-۰۸-۲۴ · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/KNOWLEDGE.md" target="_blank" rel="noopener" style="color:var(--blue)">کتابخانهٔ دانش (KNOWLEDGE.md)</a> · سیاست‌ها: <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/POLICY.md" target="_blank" rel="noopener" style="color:var(--blue)">POLICY.md</a></p>
+    <p class="mut" style="margin-top:6px">داده‌ها فقط روی همین دستگاه ذخیره می‌شوند (localStorage). «نشانگر تغییر بار» صرفاً راهنمای افزایش تدریجی است. این اپ مشاور پزشکی نیست — دامنه و مرزها در اولین اجرا پذیرفته شده‌اند.</p>
   </div>`;
 }
 
@@ -743,6 +762,14 @@ document.addEventListener("click",ev=>{
   }
   if(act==="del-exercise"){s.exercises.splice(+el.dataset.i,1);save();render();return;}
   if(act==="add-exercise"){ui.pickerTarget="session";openModal(pickerEx());return;}
+  if(act==="tune-accept"){
+    const pt=S.pendingTune;if(!pt)return;
+    const changes=[];
+    pt.items.forEach(it=>{S.volumeTargets[it.k]=clampTgt(it.k,(S.volumeTargets[it.k]||DEF_TGT[it.k])+it.delta);changes.push(MK[it.k]+" "+(it.delta>0?"+۱":"−۱"));});
+    S.tuneLog=(S.tuneLog||[]).concat([{date:today(),conf:"low",changes:changes}]).slice(-12);
+    delete S.pendingTune;save();render();toast("اعمال شد");return;
+  }
+  if(act==="tune-reject"){delete S.pendingTune;save();render();toast("رد شد — هدف‌ها دست‌نخورده");return;}
   if(act==="ack-scope"){S.disclaimerSeen=true;save();render();return;}
   if(act==="set-sleep"){
     S.readiness=S.readiness||{};
@@ -956,17 +983,26 @@ function finishWorkout(){
   <p class="mut" style="margin-bottom:8px">کوفتگی عضلانی امروز (۰ = هیچ، ۳ = شدید):</p>
   <div class="row" id="ci-sore">${[0,1,2,3].map(v=>`<button class="chip ${v===0?"on":""}" data-ci-sore="${v}" style="flex:1;text-align:center">${v}</button>`).join("")}</div>
   <div class="spread" style="margin:14px 0"><b>درد مفصل داشتی؟</b><button class="chip" data-ci-joint>نه</button></div>
-  <button class="btn" data-act="ci-save">ذخیره جلسه</button>`);
-  let sore=0,joint=false;
-  document.querySelector("[data-ci-sore]").addEventListener("click",()=>{});
+  <div id="ci-areas" style="display:none;margin-bottom:10px"><span class="mut">کدام ناحیه؟</span><div class="row" style="flex-wrap:wrap;margin-top:6px">${MKORDER.map(k=>`<button class="chip" data-ci-area="${k}" style="font-size:11.5px">${MK[k]}</button>`).join("")}</div></div>
+  <button class="btn"data-act="ci-save">ذخیره جلسه</button>`);
+  let sore=0,joint=false,jointArea=null;
   $("#modal").querySelectorAll("[data-ci-sore]").forEach(b=>b.addEventListener("click",()=>{
     sore=+b.dataset.ciSore;
     $("#modal").querySelectorAll("[data-ci-sore]").forEach(x=>x.classList.toggle("on",x===b));
   }));
   const jb=$("#modal").querySelector("[data-ci-joint]");
-  jb.addEventListener("click",()=>{joint=!joint;jb.classList.toggle("on",joint);jb.textContent=joint?"بله":"نه";});
+  const areasWrap=$("#modal").querySelector("#ci-areas");
+  jb.addEventListener("click",()=>{
+    joint=!joint;jb.classList.toggle("on",joint);jb.textContent=joint?"بله":"نه";
+    areasWrap.style.display=joint?"block":"none";
+    if(!joint){jointArea=null;areasWrap.querySelectorAll("[data-ci-area]").forEach(x=>x.classList.remove("on"));}
+  });
+  areasWrap.querySelectorAll("[data-ci-area]").forEach(b=>b.addEventListener("click",()=>{
+    jointArea=b.dataset.ciArea;
+    areasWrap.querySelectorAll("[data-ci-area]").forEach(x=>x.classList.toggle("on",x===b));
+  }));
   $("#modal").querySelector("[data-act='ci-save']").addEventListener("click",()=>{
-    S.history[S.history.length-1].checkin={sore,joint};save();closeModal();
+    S.history[S.history.length-1].checkin={sore,joint,jointAreas:joint&&jointArea?[jointArea]:[]};save();closeModal();
     setTab("volume");toast("ذخیره شد 💪");
     const flags=[];
     S.history.slice(-3).forEach(h=>{const c=h.checkin;if(c&&c.sore>=2)flags.push("کوفتگی");if(c&&c.joint)flags.push("درد مفصل");});
@@ -1004,6 +1040,7 @@ window.__GL={
  importJSON:(txt)=>{try{const d=JSON.parse(txt);if(!d.history||!d.version)throw 0;S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),d);save();render();return true;}catch(e){return false;}},
  exportJSON:()=>JSON.stringify(S),
  migrateProbe:(o)=>{const m=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);return{version:m.version,historyLen:(m.history||[]).length,hasTargets:!!m.volumeTargets,keptOldHistory:(m.history||[]).length};},
+ suggest:(id)=>suggestNext(id),
  ackScope:()=>{S.disclaimerSeen=true;save();}
 };
 try{autoTune();}catch(e){}
