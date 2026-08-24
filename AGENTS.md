@@ -61,6 +61,10 @@ All distilled research is in `docs/knowledge/` (23 files). Map:
 | Assessment benchmarks, health metrics | `huberman-galpin-series--ep1-assessment.md`, `galpin-performance--NOTES.md` |
 | Strength vs hypertrophy fundamentals | `huberman-galpin-series--ep2-strength-muscle.md`, `fhp-overload-specificity--NOTES.md` |
 
+## Regression tests
+Run the suite (iframe loads the app, exercises real flows):
+`msedge --headless --dump-dom "https://najiballahhaqmal568-hub.github.io/myboybuildingrepo/test.html?v=N`"` then grep TESTSUMMARY pass=/fail= — 22 tests: parse, home render, midnight-safe local dates, one-action start, RIR visible==saved, refresh survival, save→volume+hash, no raw ISO, migration, import validation, zero console errors.
+
 ## Verification recipe (after every edit)
 
 Headless Edge:
