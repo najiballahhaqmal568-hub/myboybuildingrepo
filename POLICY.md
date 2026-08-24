@@ -38,3 +38,12 @@ If any safety condition triggers, growth rules yield automatically.
 - Per-muscle soreness input (current check-in is session-global) — future option
 - Direct/fractional volume dual view — future option
 - Screening questionnaire depth (currently first-run scope notice) — revisit if product chapter chosen
+
+## 2026-08-24 UX-audit follow-ups (decided & shipped)
+
+- Next-session suggestions are conditional on logged RIR vs category target: overshoot → +2 reps; undershoot → −1 rep; no RIR logged → hold load and ask for RIR. Blind "+1 rep" removed.
+- Automatic volume tuning produces **proposals requiring explicit accept** on Home (with low-confidence label); silent target mutation removed. Reject leaves targets untouched.
+- Joint-pain check-in is **area-localized** (muscle chips); the joint-based volume rule only fires for the flagged area.
+- ACWR copy is a heuristic load-change indicator (1.5× labeled as rule-of-thumb), never injury prediction.
+- Bottom navigation is disabled until the scope disclaimer is accepted.
+- Set inputs and remove buttons have accessible names (aria-label); native inputs use dark color-scheme.
