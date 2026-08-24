@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fa-AF" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -229,13 +229,19 @@ function save(){localStorage.setItem(KEY,JSON.stringify(S));}
 const $esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 function today(d){const x=d?new Date(d):new Date();return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");}
 function fmtDate(iso){try{return new Date(iso+"T00:00:00").toLocaleDateString("fa-AF",{weekday:"long",day:"numeric",month:"long"});}catch(e){return iso;}}
+function localDateKey(v){const x=(v instanceof Date)?v:new Date(v);if(isNaN(x.getTime()))return today();return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");}
+function entryDay(h){return h.day||localDateKey(h.date);}
+function faNum(n){return String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]);}
+function faDateShort(key){try{return new Date(key+"T00:00:00").toLocaleDateString("fa-AF",{day:"numeric",month:"short"});}catch(e){return key;}}
+function daysAgoKey(n){const d=new Date();d.setDate(d.getDate()-n);return localDateKey(d);}
+function setTab(t){ui.tab=t;try{location.hash="tab-"+t;}catch(e){}window.scrollTo(0,0);render();}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2400);}
 function exById(id){return LIB.find(e=>e.id===id);}
 function e1rm(w,r){return w*Math.max(1,1+r/30);}
 function volOf(wsess){let v=0;(wsess.exercises||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.w&&s.r)v+=s.w*s.r;}));return Math.round(v);}
 
 function streak(){
-  const done=new Set(S.history.map(h=>h.date.slice(0,10)));
+  const done=new Set(S.history.map(h=>entryDay(h)));
   let n=0;const d=new Date();
   if(!done.has(today()))d.setDate(d.getDate()-1);
   while(done.has(today(d))){n++;d.setDate(d.getDate()-1);}
@@ -320,9 +326,9 @@ function isDeloadWeek(){const m=mesoInfo();return !!(m&&m.week===1&&m.deloadFirs
 
 function weekSets(){
   const out={};MKORDER.forEach(k=>out[k]=0);
-  const cutoff=Date.now()-7*86400000;
+  const cutoff=daysAgoKey(7);
   S.history.forEach(h=>{
-    if(new Date(h.date).getTime()<cutoff)return;
+    if(entryDay(h)<cutoff)return;
     (h.exercises||[]).forEach(e=>{
       const lib=exById(e.exId);if(!lib)return;
       const n=(e.sets||[]).filter(s=>s.w||s.r).length;
@@ -344,6 +350,7 @@ function acwr(){
 }
 
 function startSession(dayId,dayName,exList,deload){
+  if(S.activeSession){setTab("workout");toast("جلسه فعال در جریان است — ادامه بده");return;}
   const red=(S.readiness&&S.readiness[today()]&&S.readiness[today()].sleep<=1);
   const soft=deload||inManualDeload();
   S.activeSession={
@@ -359,7 +366,7 @@ function startSession(dayId,dayName,exList,deload){
         sets:sets.map(s=>({w:s.w,r:s.r,done:false}))};
     })
   };
-  save();render();
+  save();setTab("workout");
 }
 
 function openModal(html){$("#modal").innerHTML=`<div class="grabber"></div>`+html;$("#modal-bg").classList.add("open");}
@@ -433,7 +440,7 @@ function indirectNote(k){
   if(k==="biceps")return " *";
   return "";
 }
-function nextWeekCount(){return S.history.filter(h=>new Date(h.date).getTime()>Date.now()-7*86400000).length;}
+function nextWeekCount(){const ck=daysAgoKey(7);return S.history.filter(h=>entryDay(h)>=ck).length;}
 function nextDay(){
   if(!S.history.length)return PROGRAM[0];
   const order=["push","pull","legs"];
@@ -473,7 +480,7 @@ function recentMini(){
   const last=S.history.slice(-3).reverse();
   if(!last.length)return "";
   return `<div class="card"><h2>آخرین جلسات</h2>${last.map(h=>`
-    <div class="li"><span><b>${$esc(h.dayName)}</b><br><span class="mut">${fmtDate(h.date.slice(0,10))}</span></span><span class="chip">${h.volume} کگ</span></div>`).join("")}</div>`;
+    <div class="li"><span><b>${$esc(h.dayName)}</b><br><span class="mut">${fmtDate(entryDay(h))}</span></span><span class="chip">${faNum(h.volume)} کگ</span></div>`).join("")}</div>`;
 }
 function exCard(e,i){
   const lib=exById(e.exId);
@@ -490,7 +497,7 @@ function exCard(e,i){
       <td style="text-align:center;color:var(--mut)">${j+1}</td>
       <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${st.w}" data-role="w" data-i="${i}" data-j="${j}"></td>
       <td><input type="number" min="0" inputmode="numeric" value="${st.r}" data-role="r" data-i="${i}" data-j="${j}"></td>
-      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir??""}" placeholder="${defRir(lib)}" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
+      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir===""||st.rir===undefined||st.rir===null?defRir(lib):st.rir}" title="هدف RIR" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
       <td style="text-align:center"><button class="done-btn ${st.done?"did":""}" data-act="toggle-set" data-i="${i}" data-j="${j}">✓</button></td>
     </tr>`).join("")}
     </tbody></table>
@@ -534,7 +541,7 @@ function chartVolumes(){
   if(!last.length)return `<p class="empty">هنوز جلسه‌ای نیست.</p>`;
   const vols=last.map(h=>h.volume||volOf(h));
   const mx=Math.max(...vols,1);
-  return `<div class="vols" style="display:flex;align-items:flex-end;gap:6px;height:70px;padding-top:6px">${last.map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><i style="display:block;width:100%;background:var(--acc-dim);border-radius:6px;height:${vols[i]/mx*100}%"></i><span class="mut" style="font-size:9px">${h.date.slice(5)}</span></div>`).join("")}</div>`;
+  return `<div class="vols" style="display:flex;align-items:flex-end;gap:5px;height:84px;padding-top:6px">${last.map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0"><i style="display:block;width:100%;background:var(--acc-dim);border-radius:6px;height:${vols[i]/mx*100}%"></i><span class="mut" style="font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${faDateShort(entryDay(h))}</span><span style="font-size:9px;font-weight:700;color:var(--acc);white-space:nowrap">${faNum(vols[i])}</span></div>`).join("")}</div>`;
 }
 
 function vMeso(){
@@ -585,7 +592,7 @@ function vMeso(){
 }
 function mesoSessions(){
   if(!S.meso)return[];
-  return S.history.filter(h=>new Date(h.date)>=new Date(S.meso.start+"T00:00:00"));
+  return S.history.filter(h=>entryDay(h)>=S.meso.start);
 }
 function trendsFor(){
   const sess=mesoSessessions();
@@ -655,7 +662,7 @@ function vHistory(){
   return [...S.history].reverse().map(h=>{
     const ci=h.checkin;
     return `<div class="card">
-    <div class="spread"><b>${$esc(h.dayName)}</b><span class="mut">${fmtDate(h.date.slice(0,10))}</span></div>
+    <div class="spread"><b>${$esc(h.dayName)}</b><span class="mut">${fmtDate(entryDay(h))}</span></div>
     <div class="row mut" style="margin:6px 0">${h.volume} کگ حجم • ${(h.exercises||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} ست • ${h.durationMin} دقیقه
     ${ci?(ci.joint?` • <span class="pain">درد مفصل</span>`:"")+(ci.sore>=2?` • کوفتگی ${ci.sore}/۳`:""):""}</div>
     ${(h.exercises||[]).map(e=>`<div class="li"><b>${$esc(e.name)}</b><span class="mut">${(e.sets||[]).map(s=>s.w?s.w+"×"+s.r+(s.rir!=null&&s.rir!==""?"@"+s.rir:""):(s.r+" تکرار")).join(" ، ")}</span></div>`).join("")}
@@ -699,7 +706,7 @@ function vSettings(){
 
 document.addEventListener("click",ev=>{
   const nb=ev.target.closest("[data-tab]");
-  if(nb){ui.tab=nb.dataset.tab;location.hash="tab-"+ui.tab;render();window.scrollTo(0,0);return;}
+  if(nb){setTab(nb.dataset.tab);return;}
   const el=ev.target.closest("[data-act]");
   if(!el)return;
   const act=el.dataset.act;
@@ -789,8 +796,7 @@ document.addEventListener("click",ev=>{
     S.meso={start:$("#meso-start").value||today(),weeks:w,deloadFirst:true};
     save();render();toast("مسوسیکل شروع شد — هفته اول دلود");return;
   }
-  if(act==="open-review"){ui.reviewStep=1;ui.reviewData={adj:{}};ui.tab="meso";render();
-    window.scrollTo(0,0);return;}
+  if(act==="open-review"){ui.reviewStep=1;ui.reviewData={adj:{}};setTab("meso");return;}
   if(act==="end-meso-early"){ui.reviewStep=1;ui.reviewData={adj:{}};render();return;}
   if(act==="rev-set"){ui.reviewData.adj[el.dataset.k]=el.dataset.v;render();
     const mb=$("#modal-bg");/*re-render main behind*/return;}
@@ -823,7 +829,7 @@ document.addEventListener("click",ev=>{
   }
   if(act==="wipe"){if(confirm("همه داده‌ها پاک شوند؟")){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);S=loadState();render();toast("پاک شد");}return;}
   if(act==="close-modal"){closeModal();return;}
-  if(act==="go-workout"){ui.tab="workout";render();return;}
+  if(act==="go-workout"){setTab("workout");return;}
   if(act==="timer-skip"){endRest(false);return;}
   if(act==="timer-plus"){ui.rest+=15;return;}
   if(act==="timer-minus"){ui.rest=Math.max(0,ui.rest-15);return;}
@@ -916,6 +922,7 @@ function finishWorkout(){
   const mins=Math.max(1,Math.round((Date.now()-new Date(s.startedAt).getTime())/60000));
   S.history.push({
     date:new Date().toISOString(),
+    day:localDateKey(s.startedAt),
     dayId:s.dayId,dayName:s.dayName,durationMin:mins,deload:!!s.deload,
     exercises:used.map(e=>({exId:e.exId,name:e.name,
       sets:e.sets.filter(st=>st.w||st.r).map(st=>({w:+st.w||"",r:+st.r,rir:st.rir===""||st.rir==null?undefined:+st.rir}))})),
@@ -937,7 +944,7 @@ function finishWorkout(){
   jb.addEventListener("click",()=>{joint=!joint;jb.classList.toggle("on",joint);jb.textContent=joint?"بله":"نه";});
   $("#modal").querySelector("[data-act='ci-save']").addEventListener("click",()=>{
     S.history[S.history.length-1].checkin={sore,joint};save();closeModal();
-    ui.tab="volume";render();toast("ذخیره شد 💪");
+    setTab("volume");toast("ذخیره شد 💪");
     const flags=[];
     S.history.slice(-3).forEach(h=>{const c=h.checkin;if(c&&c.sore>=2)flags.push("کوفتگی");if(c&&c.joint)flags.push("درد مفصل");});
     if(flags.length>=2)setTimeout(()=>toast("⚠️ چند جلسه اخیر علائم داشت — به بازنگری مسوسیکل سر بزن"),1200);
@@ -958,7 +965,24 @@ function doSaveWeight(v){
   const t=(m&&m[1])||(q&&q[1]);
   if(t&&["home","workout","volume","meso","history","settings"].includes(t))ui.tab=t;
 })();
-try{autoTune();}catch(e){}
+window.addEventListener("hashchange",()=>{
+  const m=(location.hash||"").match(/^#tab-(\w+)/);
+  const t=m&&["home","workout","volume","meso","history","settings"].includes(m[1])?m[1]:null;
+  if(t&&t!==ui.tab){ui.tab=t;render();}
+});
+window.__GL={
+ today,localDateKey,entryDay,faNum,
+ tab:()=>ui.tab,hash:()=>location.hash,
+ main:()=>document.querySelector("#main").innerHTML,
+ state:()=>S,
+ start:(id)=>{const p=PROGRAM.find(x=>x.id===id)||PROGRAM[0];startSession(p.id,p.name,p.ex,isDeloadWeek());},
+ finish:()=>finishWorkout(),
+ rirDefault:(id)=>defRir(exById(id)),
+ importJSON:(txt)=>{try{const d=JSON.parse(txt);if(!d.history||!d.version)throw 0;S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),d);save();render();return true;}catch(e){return false;}},
+ exportJSON:()=>JSON.stringify(S),
+ migrateProbe:(o)=>{const m=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);return{version:m.version,historyLen:(m.history||[]).length,hasTargets:!!m.volumeTargets,keptOldHistory:(m.history||[]).length};}
+};
+autoTune();
 render();
 </script>
 </body>
