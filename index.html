@@ -306,7 +306,7 @@ function suggestNext(exId){
   const L=S.history.slice(-2);
   const badRecov=L.length===2&&L.every(h=>h.checkin&&(h.checkin.sore>=2||h.checkin.joint));
   if(badRecov)return {txt:"امروز حفظ حجم — ریکاوری اول",why:"دو جلسهٔ اخیر کوفتگی/درد گزارش شده",conf:"بالا",hold:true};
-  if(sess.length<2)return {txt:"شروع با RIR "+tgt,why:"بعد از ۲ جلسهٔ قابل‌مقایسه، پیشنهاد دقیق می‌دهم",conf:"—",hold:true};
+  if(sess.length<2)return {txt:"شروع با RIR "+tgt+" — بعد از ۲ جلسهٔ قابل‌مقایسه پیشنهاد می‌دهم",why:"دادهٔ کافی نیست",conf:"—",hold:true};
   const p=lastPerf(exId);if(!p)return {txt:"",why:"",conf:"—",hold:true};
   const prevTop=(sess[sess.length-2].exercises||[]).find(x=>x.exId===exId);
   const prevGood=prevTop?prevTop.sets.filter(s=>+s.w>0&&+s.r>0):[];
