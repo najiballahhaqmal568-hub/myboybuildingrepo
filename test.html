@@ -21,7 +21,7 @@ function fire(el,type){el.dispatchEvent(new Event(type,{bubbles:true}));}
 try{
  const fr=document.getElementById("app");
  await waitLoad(fr);
- const W=fr.contentWindow, GL=W.__GL, D=fr.contentDocument;
+ let W=fr.contentWindow, GL=W.__GL, D=fr.contentDocument;
  if(!GL)throw new Error("GL API missing — app script died");
 
  // T1 parse + home renders
@@ -61,16 +61,17 @@ try{
 
  // T6 refresh survives (active session persists)
  fr.contentWindow.location.reload();
- await sleep(700); await waitLoad(fr);
+ await sleep(900); await waitLoad(fr);
+ W=fr.contentWindow; GL=W.__GL; D=fr.contentDocument;
  line("T6 active session survives refresh", !!(GL.state().activeSession&&GL.state().activeSession.exercises), "");
  const rirAfterReload=(D.querySelector('input[data-role="rir"]')||{}).value;
  line("T6b RIR prefilled after refresh", rirAfterReload==="3", String(rirAfterReload));
 
  // T7 finish → check-in → lands on Volume with hash, no raw ISO in DOM
- W.finish(); await sleep(100);
- const ci=document.querySelector("[data-act='ci-save']");
+ GL.finish(); await sleep(120);
+ const ci=D.querySelector("[data-act='ci-save']");
  if(ci)ci.click();
- await sleep(150);
+ await sleep(180);
  line("T7a save opens Volume tab", GL.tab()==="volume", GL.tab());
  line("T7b URL hash matches (#tab-volume)", GL.hash()==="#tab-volume", GL.hash());
  const mainHtml=GL.main();
