@@ -271,8 +271,18 @@ function lastPerf(exId){
   return null;
 }
 function suggestNext(exId){
+  if(screeningFailed())return "";
   const lib=exById(exId);const tgt=lib?defRir(lib):1;
+  const sess=exSessions(exId);
+  const L=S.history.slice(-2);
+  const badRecov=L.length===2&&L.every(h=>h.checkin&&(h.checkin.sore>=2||h.checkin.joint));
+  if(badRecov)return "پیشنهاد: امروز حفظ حجم — ریکاوری اول";
+  if(sess.length<2)return "شروع با RIR "+tgt+" — بعد از ۲ جلسهٔ قابل‌مقایسه پیشنهاد می‌دهم";
   const p=lastPerf(exId);if(!p)return "";
+  const prevTop=(sess[sess.length-2].exercises||[]).find(x=>x.exId===exId);
+  const prevGood=prevTop?prevTop.sets.filter(s=>+s.w>0&&+s.r>0):[];
+  const prevW=prevGood.length?Math.max(...prevGood.map(s=>+s.w)):null;
+  if(prevW&&Math.abs(p.w-prevW)/prevW>0.1)return "برای مقایسهٔ منصفانه، "+prevW+" کگ را تکرار کن";
   const pre="پیشنهاد: ";
   if(p.rir===null)return pre+"همان "+p.w+" کگ — این جلسه RIR ثبت کن";
   if(p.rir>tgt+1)return pre+p.w+" کگ × "+(p.r+2)+" (سبک‌تر از هدف بود)";
@@ -281,6 +291,7 @@ function suggestNext(exId){
   const nw=Math.round((p.w*1.05)*2)/2;
   return pre+nw+" کگ × "+Math.max(6,p.r-3)+" تکرار";
 }
+function screeningFailed(){return !!(S.screening&&S.screening.done&&S.screening.passed===false);}
 function exSessions(exId){
   return S.history.filter(h=>(h.exercises||[]).some(e=>e.exId===exId));
 }
@@ -382,8 +393,7 @@ function closeModal(){stopAnim();$("#modal-bg").classList.remove("open");}
 
 function render(){
   if(!S.disclaimerSeen){
-    document.querySelectorAll("#nav button").forEach(b=>{b.disabled=true;});
-    document.querySelectorAll("#nav button").forEach(b=>b.classList.remove("on"));
+    document.querySelectorAll("#nav button").forEach(b=>{b.disabled=true;b.classList.remove("on");});
     const m=$("#main");
     m.innerHTML=`<div class="card" style="border-color:var(--amber)">
       <h2>قبل از شروع — دامنهٔ این اپ</h2>
@@ -393,6 +403,33 @@ function render(){
       <div class="li"><span><b style="color:var(--red)">قرمز</b><br><span class="mut">درد قفسهٔ سینه، تنگی نفس، غش، ادرار تیره ← مراقبت فوری</span></span></div>
       <p class="mut" style="margin-top:8px">این اپ آسیب را تشخیص نمی‌دهد، زمان بهبود وعده نمی‌دهد و جایگزین پزشک یا مربی واجد صلاحیت نیست. مکمل‌ها و پروتکل‌های ویژه فقط آموزش‌اند.</p>
       <button class="btn" style="margin-top:10px" data-act="ack-scope">می‌فهمم — شروع کن</button>
+    </div>`;
+    return;
+  }
+  if(!(S.screening&&S.screening.done)){
+    document.querySelectorAll("#nav button").forEach(b=>{b.disabled=true;b.classList.remove("on");});
+    const qs=[
+      "بیماری قلبی، درد یا فشار در قفسهٔ سینه هنگام فعالیت داری؟",
+      "هنگام تمرین سرگیجه یا غش کرده‌ای؟",
+      "پزشک دربارهٔ استخوان/مفصل/دییس حرف زده؟",
+      "فشارخون، دیابت یا داروی قلبی-عروقی مصرف می‌کنی؟",
+      "بارداری یا پس از زایمان اخیر؟",
+      "آسیب فعلی داری که در حال بهبود است؟"
+    ];
+    const scr=ui.scr||{};
+    const answered=qs.filter((_,i)=>scr[i]).length;
+    const m=$("#main");
+    m.innerHTML=`<div class="card" style="border-color:var(--blue)">
+      <h2>غربالگری سلامت (${answered} از ${qs.length})</h2>
+      <p class="mut" style="margin-bottom:10px">برای فعال‌شدن پیشنهادهای شخصی، این ۶ سؤال ایمنی را جواب بده. داده‌ها فقط روی همین دستگاه می‌ماند.</p>
+      ${qs.map((q,i)=>`<div class="li" style="flex-direction:column;align-items:stretch">
+        <b style="font-size:13px">${q}</b>
+        <div class="row" style="margin-top:4px">
+          <button class="chip ${scr[i]==="y"?"on":""}" style="flex:1;text-align:center" data-act="scr-set" data-i="${i}" data-v="y">بله</button>
+          <button class="chip ${scr[i]==="n"?"on":""}" style="flex:1;text-align:center" data-act="scr-set" data-i="${i}" data-v="n">خیر</button>
+        </div>
+      </div>`).join("")}
+      <button class="btn" style="margin-top:10px" data-act="scr-save" ${answered<qs.length?"disabled style='opacity:.5'":""}>ثبت غربالگری</button>
     </div>`;
     return;
   }
@@ -446,12 +483,13 @@ function vHome(){
     <div class="spread"><b>تمرین در جریان</b><span class="mut">${$esc(sess.dayName)}</span></div>
     <p class="mut" style="margin:6px 0 10px">${sess.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0)} ست ثبت • حجم ${volOf(sess)} کگ${sess.deload?" • هفته دلود":""}</p>
     <button class="btn" data-act="go-workout">ادامه تمرین</button></div>`:""}
-  <div class="card">
+  ${sess?"":`<div class="card">
     <div class="spread"><h2 style="margin:0">تمرین پیشنهادی امروز</h2><span class="chip">${nextWeekCount()} جلسه / ۷ روز</span></div>
     <p style="margin:8px 0 12px">${$esc(sug.name)}</p>
     <button class="btn" data-act="start-suggested">شروع تمرین</button>
     <button class="btn ghost" style="margin-top:8px" data-act="pick-day">روز دیگر…</button>
-  </div>
+  </div>`}
+  ${screeningFailed()?`<div class="card" style="border-color:var(--amber)"><b>غربالگری: نیاز به مشورت</b><p class="mut" style="margin-top:4px">پیشنهادهای شخصی خاموش‌اند. با متخصص مشورت کن؛ بعد از تنظیمات می‌توانی غربالگری را دوباره بگیری.</p></div>`:""}
   <div class="card">
     <h2>حجم هفته (۷ روز اخیر)</h2>
     ${top.length?top.map(k=>`
@@ -539,7 +577,7 @@ function exCard(e,i){
     </div>
   </div>`;
 }
-function defRir(lib){return lib?(lib.cls==="H"?2:lib.cls==="C"?1:0):1;}
+function defRir(lib){return lib?(lib.cls==="H"?2:lib.cls==="C"?1:1):1;}
 function prFor(exId){const p=S.prs[exId];return p?p.w+"×"+p.r:"";}
 function isPrLive(e){
   const p=S.prs[e.exId];if(!p)return false;
@@ -583,8 +621,8 @@ function vMeso(){
       <h2>شروع مسوسیکل</h2>
       <p class="mut" style="margin-bottom:10px">یک بلوک ${4} هفته‌ای: هفتهٔ اول دلود (~۶۵٪ حجم)، سه هفتهٔ دیگر با RIR ثابت. آخر بلوک، جادوگر بازنگری پیشنهاد می‌دهد چه چیزی تغییر کند.</p>
       <div class="grid2">
-        <div><span class="mut">طول بلوک (هفته)</span><input type="number" id="meso-weeks" value="4" min="3" max="8"></div>
-        <div><span class="mut">تاریخ شروع</span><input type="date" id="meso-start" value="${today()}"></div>
+        <div><span class="mut">طول بلوک (هفته)</span><input type="number" id="meso-weeks" value="4" min="3" max="8" aria-label="طول بلوک به هفته"></div>
+        <div><span class="mut">تاریخ شروع</span><input type="date" id="meso-start" value="${today()}" aria-label="تاریخ شروع بلوک" style="direction:ltr;text-align:center"><span class="mut" id="meso-start-fa" style="display:block;margin-top:4px">${fmtDate(today())}</span></div>
       </div>
       <button class="btn" style="margin-top:10px" data-act="start-meso">شروع مسوسیکل</button>
     </div>
@@ -697,9 +735,9 @@ function vHistory(){
     const ci=h.checkin;
     return `<div class="card">
     <div class="spread"><b>${$esc(h.dayName)}</b><span class="mut">${fmtDate(entryDay(h))}</span></div>
-    <div class="row mut" style="margin:6px 0">${h.volume} کگ حجم • ${(h.exercises||[]).reduce((a,e)=>a+(e.sets||[]).length,0)} ست • ${h.durationMin} دقیقه
-    ${ci?(ci.joint?` • <span class="pain">درد مفصل</span>`:"")+(ci.sore>=2?` • کوفتگی ${ci.sore}/۳`:""):""}</div>
-    ${(h.exercises||[]).map(e=>`<div class="li"><b>${$esc(e.name)}</b><span class="mut">${(e.sets||[]).map(s=>s.w?s.w+"×"+s.r+(s.rir!=null&&s.rir!==""?"@"+s.rir:""):(s.r+" تکرار")).join(" ، ")}</span></div>`).join("")}
+    <div class="row mut" style="margin:6px 0">${faNum(h.volume)} کگ حجم • ${faNum((h.exercises||[]).reduce((a,e)=>a+(e.sets||[]).length,0))} ست • ${faNum(h.durationMin)} دقیقه
+    ${ci?(ci.joint?` • <span class="pain">درد مفصل</span>`:"")+(ci.sore>=2?` • کوفتگی ${faNum(ci.sore)}/۳`:""):""}</div>
+    ${(h.exercises||[]).map(e=>`<div class="li"><b>${$esc(e.name)}</b><span class="mut">${(e.sets||[]).map(s=>s.w?faNum(s.w)+" کگ × "+faNum(s.r)+" تکرار"+(s.rir!=null&&s.rir!==""?" (RIR "+faNum(s.rir)+")":""):faNum(s.r)+" تکرار").join(" ، ")}</span></div>`).join("")}
     </div>`;
   }).join("");
 }
@@ -710,7 +748,7 @@ function vSettings(){
   <div class="card">
     <h2>اهداف حجم هفتگی (ست)</h2>
     ${MKORDER.map(k=>`<div class="li"><b>${MK[k]}</b>
-      <input type="number" min="2" max="30" value="${S.volumeTargets[k]}" data-tgt="${k}" style="width:80px;text-align:center"></div>`).join("")}
+      <input type="number" min="2" max="30" value="${S.volumeTargets[k]}" aria-label="هدف ست هفتگی ${MK[k]}" data-tgt="${k}" style="width:80px;text-align:center"></div>`).join("")}
     <p class="mut" style="margin-top:8px">تغییرات خودکار ذخیره می‌شود.</p>
   </div>
   <div class="card">
@@ -720,7 +758,7 @@ function vSettings(){
   <div class="card">
     <h2>وزن بدن</h2>
     <div class="row">
-      <input type="number" step="0.1" id="bw-in" placeholder="کیلوگرم" inputmode="decimal">
+      <input type="number" step="0.1" id="bw-in" placeholder="کیلوگرم" inputmode="decimal" aria-label="وزن بدن به کیلوگرم">
       <button class="btn sm" data-act="save-bw" style="min-width:90px">ثبت</button>
     </div>
     ${wts.slice(0,8).map(w=>`<div class="li"><b>${w.kg} کگ</b><span class="mut">${fmtDate(w.date)}</span></div>`).join("")}
@@ -771,6 +809,23 @@ document.addEventListener("click",ev=>{
   }
   if(act==="tune-reject"){delete S.pendingTune;save();render();toast("رد شد — هدف‌ها دست‌نخورده");return;}
   if(act==="ack-scope"){S.disclaimerSeen=true;save();render();return;}
+  if(act==="scr-set"){
+    ui.scr=ui.scr||{};
+    ui.scr[el.dataset.i]=el.dataset.v;
+    render();return;
+  }
+  if(act==="scr-save"){
+    const scr=ui.scr||{};
+    const vals=Object.values(scr);
+    if(vals.length<6){toast("همهٔ ۶ سؤال را جواب بده");return;}
+    const passed=!vals.includes("y");
+    S.screening={done:true,passed:passed,ts:new Date().toISOString()};
+    ui.scr={};
+    save();render();
+    toast(passed?"غربالگری سبز — پیشنهادها فعال":"زرد: پیشنهادهای شخصی خاموش — با متخصص مشورت کن");
+    return;
+  }
+  if(act==="scr-reset"){S.screening={done:false,passed:false,ts:new Date().toISOString()};ui.scr={};save();render();return;}
   if(act==="set-sleep"){
     S.readiness=S.readiness||{};
     S.readiness[today()]={sleep:+el.dataset.v};
@@ -921,6 +976,7 @@ function pickerEx(){
 
 document.addEventListener("input",ev=>{
   const el=ev.target;
+  if(el.id==="meso-start"){const f=$("#meso-start-fa");if(f)f.textContent="شروع: "+fmtDate(el.value);return;}
   if(el.id==="ex-search"){
     const q=el.value.trim();
     let html="";
@@ -1041,6 +1097,7 @@ window.__GL={
  exportJSON:()=>JSON.stringify(S),
  migrateProbe:(o)=>{const m=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),o);return{version:m.version,historyLen:(m.history||[]).length,hasTargets:!!m.volumeTargets,keptOldHistory:(m.history||[]).length};},
  suggest:(id)=>suggestNext(id),
+ go:(t)=>setTab(t),
  ackScope:()=>{S.disclaimerSeen=true;save();}
 };
 try{autoTune();}catch(e){}
