@@ -60,8 +60,8 @@ try{
  // T3 one-action start → workout screen
  GL.start("push");
  await sleep(120);
- line("T3a start opens Workout tab", GL.tab()==="workout", GL.tab());
- line("T3b hash synced", GL.hash()==="#tab-workout", GL.hash());
+ line("T3a start opens Train tab", GL.tab()==="train", GL.tab());
+ line("T3b hash synced", GL.hash()==="#tab-train", GL.hash());
  line("T3c active session exists", !!GL.state().activeSession, "");
  const before=JSON.stringify(GL.state().activeSession);
  GL.start("push"); await sleep(80);
@@ -103,8 +103,8 @@ try{
  const ci=D.querySelector("[data-act='ci-save']");
  if(ci)ci.click();
  await sleep(180);
- line("T7a save opens Volume tab", GL.tab()==="volume", GL.tab());
- line("T7b URL hash matches (#tab-volume)", GL.hash()==="#tab-volume", GL.hash());
+ line("T7a save opens Progress tab", GL.tab()==="progress", GL.tab());
+ line("T7b URL hash matches (#tab-progress)", GL.hash()==="#tab-progress", GL.hash());
  const mainHtml=GL.main();
  line("T7c no raw ISO timestamp visible", !/T\d{2}:\d{2}/.test(mainHtml), "");
  line("T7d volume chart bars present", mainHtml.indexOf("vbar")>-1, "");
