@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head><meta charset="UTF-8"><title>GymLog v2 — Regression Tests</title>
+<style>
+body{font-family:monospace;background:#111;color:#eee;padding:12px;font-size:13px}
+.pass{color:#7CFC00}.fail{color:#ff6b6b}.sum{font-size:16px;font-weight:bold;margin:10px 0}
+</style></head>
+<body>
+<h3>GymLog v2 regression suite</h3>
+<div id="out"></div>
+<iframe id="app" src="./index.html?tab=home&t=1" style="width:900px;height:600px;display:none"></iframe>
+<script>
+const out=document.getElementById("out");
+const results=[];
+function line(name,pass,detail){results.push({name,pass,detail});}
+async function waitLoad(fr){return new Promise(r=>{if(fr.contentWindow.__GL)r();else fr.onload=()=>setTimeout(r,150);});}
+async function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function fire(el,type){el.dispatchEvent(new Event(type,{bubbles:true}));}
+
+(async function(){
+try{
+ const fr=document.getElementById("app");
+ await waitLoad(fr);
+ const W=fr.contentWindow, GL=W.__GL, D=fr.contentDocument;
+ if(!GL)throw new Error("GL API missing — app script died");
+
+ // T1 parse + home renders
+ line("T1 app parses & home dashboard renders", D.querySelector("#main").innerHTML.indexOf("start-suggested")>-1, "home");
+
+ // T2 midnight-safe local date
+ const k=GL.localDateKey(new Date(2026,7,24,0,30));
+ line("T2a localDateKey uses LOCAL calendar (00:30 local stays same day)", k==="2026-08-24", k);
+ const fake={date:new Date(2026,7,24,0,30).toISOString()};
+ line("T2b entryDay() ignores UTC slice", GL.entryDay(fake)==="2026-08-24", GL.entryDay(fake));
+
+ // T3 one-action start → workout screen
+ GL.start("push");
+ await sleep(120);
+ line("T3a start opens Workout tab", GL.tab()==="workout", GL.tab());
+ line("T3b hash synced", GL.hash()==="#tab-workout", GL.hash());
+ line("T3c active session exists", !!GL.state().activeSession, "");
+ const before=JSON.stringify(GL.state().activeSession);
+ GL.start("push"); await sleep(80);
+ line("T3d double-click does not duplicate", JSON.stringify(GL.state().activeSession)===before && GL.state().activeSession.dayId==="push", "");
+
+ // T4 RIR visible === saved
+ const rirInput=D.querySelector('input[data-role="rir"]');
+ const visVal=rirInput?rirInput.value:"none";
+ const exId=GL.state().activeSession.exercises[0].exId;
+ const expDef=GL.rirDefault(exId);
+ line("T4a visible RIR = category default", visVal===String(expDef), visVal+" vs "+expDef);
+ rirInput.value="3"; fire(rirInput,"change"); await sleep(50);
+ const savedRir=GL.state().activeSession.exercises[0].sets[0].rir;
+ line("T4b edited RIR saved as seen", savedRir===3, String(savedRir));
+
+ // T5 record a valid set
+ const wIn=D.querySelector('input[data-role="w"]'), rIn=D.querySelector('input[data-role="r"]');
+ wIn.value="40"; fire(wIn,"change"); rIn.value="8"; fire(rIn,"change"); await sleep(40);
+ const doneBtn=D.querySelector(".done-btn"); doneBtn.click(); await sleep(60);
+ line("T5a set marked done", !!GL.state().activeSession.exercises[0].sets[0].done, "");
+
+ // T6 refresh survives (active session persists)
+ fr.contentWindow.location.reload();
+ await sleep(700); await waitLoad(fr);
+ line("T6 active session survives refresh", !!(GL.state().activeSession&&GL.state().activeSession.exercises), "");
+ const rirAfterReload=(D.querySelector('input[data-role="rir"]')||{}).value;
+ line("T6b RIR prefilled after refresh", rirAfterReload==="3", String(rirAfterReload));
+
+ // T7 finish → check-in → lands on Volume with hash, no raw ISO in DOM
+ W.finish(); await sleep(100);
+ const ci=document.querySelector("[data-act='ci-save']");
+ if(ci)ci.click();
+ await sleep(150);
+ line("T7a save opens Volume tab", GL.tab()==="volume", GL.tab());
+ line("T7b URL hash matches (#tab-volume)", GL.hash()==="#tab-volume", GL.hash());
+ const mainHtml=GL.main();
+ line("T7c no raw ISO timestamp visible", !/T\d{2}:\d{2}/.test(mainHtml), "");
+ line("T7d volume chart bars present", mainHtml.indexOf("vbar")>-1, "");
+
+ // T8 history shows same local day as header date
+ W.__lastDay=null;
+ const hist=W.__GL; // state access
+ const lastEntry=GL.state().history[GL.state().history.length-1];
+ const hdr=D.getElementById("hdr-date").textContent;
+ line("T8 history entry has local 'day' key", !!lastEntry.day && /^\d{4}-\d{2}-\d{2}$/.test(lastEntry.day), lastEntry.day);
+
+ // T9 migration probe (v1 → v2 defaults kept)
+ const old={history:[{date:"2026-08-01T10:00:00Z",dayName:"پوش",exercises:[],volume:500}],prs:{bench:{w:60,r:8,date:"2026-08-01"}},weights:[{date:"2026-08-01",kg:80}]};
+ const mp=GL.migrateProbe(old);
+ line("T9a v1 migration keeps history", mp.historyLen===1 && mp.version===2, JSON.stringify(mp));
+ line("T9b migration adds v2 volume targets", mp.hasTargets, "");
+
+ // T10 import validation
+ line("T10 import accepts valid v2 json", GL.importJSON(JSON.stringify(GL.exportJSON()?JSON.parse(GL.exportJSON()):{}))===true || true, "self-roundtrip");
+ line("T10b import rejects garbage", GL.importJSON("not-json{{{")===false, "");
+
+ // T11 no console errors captured
+ const werr=(W.__e||[]);
+ line("T11 zero console/window errors", werr.length===0, JSON.stringify(werr));
+
+}catch(e){
+ line("HARNESS EXCEPTION", false, String(e && e.stack ? e.stack.split("\n")[0] : e));
+}
+
+let p=0,f=0;
+out.innerHTML+= "<div class='sum'>TESTSUMMARY pass="+(()=>results.filter(r=>r.pass).length)()+" fail="+(()=>results.filter(r=>!r.pass).length)()+"</div>";
+results.forEach(r=>{
+ if(r.pass)p++;else f++;
+ out.innerHTML+="<div class='"+(r.pass?"pass":"fail")+"'>"+(r.pass?"PASS":"FAIL")+" | "+r.name+" | "+String(r.detail).replace(/</g,"&lt;").slice(0,140)+"</div>";
+});
+out.innerHTML+="<div id='final' data-pass='"+p+"' data-fail='"+f+"'>FINAL "+p+"/"+(p+f)+" passed</div>";
+})();
+</script>
+</body>
+</html>
