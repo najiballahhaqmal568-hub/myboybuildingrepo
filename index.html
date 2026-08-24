@@ -95,7 +95,7 @@ table.sets input{width:100%;text-align:center;padding:8px 2px;border-radius:9px}
   <button data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>خانه</span></button>
   <button data-tab="workout"><svg viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg><span>تمرین</span></button>
   <button data-tab="volume"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-9M22 20H2"/></svg><span>حجم</span></button>
-  <button data-tab="meso"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>مسوسیکل</span></button>
+  <button data-tab="meso"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span>بلوک</span></button>
   <button data-tab="history"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg><span>تاریخچه</span></button>
   <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg><span>تنظیمات</span></button>
 </nav>
@@ -143,6 +143,58 @@ const LIB=[
 {id:"leg_raise",n:"بالا آوردن پا آویزان",mk:"abs",sec:[],cls:"I",eq:"بدن",how:"لگن عقب بچرخاند که شکم کار کند نه خم‌کننده ران."}
 ];
 const VIDBASE="https://www.youtube.com/watch?v=";
+const EXANIM={bench:"press_h",incline_db:"press_h",pushup:"press_h",dips:"dip",cable_cross:"fly",ohp:"press_v",lat_raise:"latraise",face_pull:"facepull",triceps_pd:"pushdown",skull:"skull",deadlift:"hinge",rdl:"hinge",hip_thrust:"thrust",pullup:"pullv",pulldown:"pullv",row_bb:"row",row_db:"row",shrug:"shrug",curl_bb:"curl",hammer_curl:"curl",preacher:"curl",incline_curl:"curl",squat:"squat",leg_press:"squat",leg_ext:"legext",leg_curl:"legcurl",calf:"calf",plank:"plank",crunch:"crunch",leg_raise:"crunch"};
+const PATTERNS={
+press_h:{prop:"bar",a:[92,58,82,62,78,52,77,46,42,68,28,74,14,78],b:[92,58,82,62,79,38,78,28,42,68,28,74,14,78]},
+press_v:{prop:"bar",a:[60,16,58,30,52,44,50,58,56,64,54,84,52,102],b:[60,16,58,30,64,20,66,10,56,64,54,84,52,102]},
+pullv:{prop:"bar",a:[60,22,58,34,62,22,64,12,56,64,54,84,52,102],b:[60,22,58,34,66,32,64,42,56,64,54,84,52,102]},
+row:{prop:"bar",a:[34,34,46,40,58,54,68,62,44,64,52,84,50,102],b:[34,34,46,40,52,46,54,44,44,64,52,84,50,102]},
+fly:{a:[60,20,58,34,74,36,90,40,56,64,54,84,52,102],b:[60,20,58,34,64,42,55,44,56,64,54,84,52,102]},
+squat:{a:[60,16,58,30,50,38,44,46,56,62,58,84,56,104],b:[64,34,62,48,50,56,40,60,52,66,40,86,54,104]},
+hinge:{prop:"bar",a:[60,16,58,30,62,46,66,58,56,62,58,84,56,104],b:[44,38,52,44,62,50,70,52,58,62,62,84,56,104]},
+legcurl:{a:[12,58,22,60,30,62,34,62,30,64,52,66,72,66],b:[12,58,22,60,30,62,34,62,30,64,52,66,64,44]},
+legext:{a:[36,44,44,58,52,62,58,62,44,60,64,62,80,88],b:[36,44,44,58,52,62,58,62,44,60,64,62,78,44]},
+calf:{a:[60,16,58,30,60,44,60,58,56,62,58,84,56,106],b:[60,10,58,25,60,39,60,53,56,57,58,78,56,98],floor:true},
+curl:{prop:"db",a:[60,16,58,30,64,50,68,64,56,62,58,84,56,104],b:[60,16,58,30,60,48,56,34,56,62,58,84,56,104]},
+pushdown:{a:[60,16,58,30,66,46,70,44,56,62,58,84,56,104],b:[60,16,58,30,66,46,63,68,56,62,58,84,56,104]},
+latraise:{a:[60,16,58,30,62,46,64,58,56,62,58,84,56,104],b:[60,16,58,30,72,36,86,34,56,62,58,84,56,104]},
+facepull:{a:[60,20,58,34,70,32,80,28,56,62,54,84,52,102],b:[60,20,58,34,64,38,58,38,56,62,54,84,52,102]},
+crunch:{a:[86,60,74,64,70,58,72,52,40,68,28,74,14,78],b:[78,46,68,54,66,50,68,48,40,68,28,74,14,78]},
+plank:{a:[14,62,30,60,44,62,58,64,34,66,48,80,62,94],b:[14,61,30,59,44,61,58,63,34,65,48,79,62,93]},
+dip:{prop:"bars",a:[60,14,58,28,64,40,62,30,56,58,54,80,52,98],b:[60,24,58,38,64,40,62,30,56,68,54,90,52,108]},
+shrug:{a:[60,16,58,30,60,44,60,58,56,62,58,84,56,104],b:[60,11,58,25,60,39,60,53,56,57,58,79,56,99]}
+};
+let animRAF=null;
+function drawPose(svg,P){
+  const j=[[P[0],P[1]],[P[2],P[3]],[P[4],P[5]],[P[6],P[7]],[P[8],P[9]],[P[10],P[11]],[P[12],P[13]]];
+  const seg=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#e7e9ee" stroke-width="3.4" stroke-linecap="round"/>`;
+  let inner="";
+  inner+=`<circle cx="${j[0][0]}" cy="${j[0][1]}" r="6.5" fill="none" stroke="#e7e9ee" stroke-width="3"/>`;
+  inner+=seg(j[0][0],j[0][1]+6,j[1][0],j[1][1]);
+  inner+=seg(j[1][0],j[1][1],j[4][0],j[4][1]);
+  inner+=seg(j[1][0],j[1][1],j[2][0],j[2][1])+seg(j[2][0],j[2][1],j[3][0],j[3][1]);
+  inner+=seg(j[4][0],j[4][1],j[5][0],j[5][1])+seg(j[5][0],j[5][1],j[6][0],j[6][1]);
+  [1,2,3,4,5,6].forEach(i=>inner+=`<circle cx="${j[i][0]}" cy="${j[i][1]}" r="2.6" fill="#a3e635"/>`);
+  const pat=svg.dataset.prop;
+  if(pat==="bar")inner+=`<line x1="${j[3][0]-16}" y1="${j[3][1]-3}" x2="${j[3][0]+16}" y2="${j[3][1]-3}" stroke="#a3e635" stroke-width="4" stroke-linecap="round"/>`;
+  if(pat==="db")inner+=`<circle cx="${j[3][0]}" cy="${j[3][1]+4}" r="4.5" fill="#a3e635"/>`;
+  if(pat==="bars")inner+=`<line x1="40" y1="30" x2="40" y2="100" stroke="#262b37" stroke-width="4"/><line x1="80" y1="30" x2="80" y2="100" stroke="#262b37" stroke-width="4"/>`;
+  svg.innerHTML=inner;
+}
+function startAnim(svg){
+  stopAnim();
+  const pat=PATTERNS[svg.dataset.pattern];if(!pat)return;
+  svg.dataset.prop=pat.prop||"";
+  const A=pat.a,B=pat.b,t0=performance.now(),dur=1600;
+  const tick=now=>{
+    const ph=(Math.sin((now-t0)/dur*Math.PI*2)+1)/2;
+    const P=A.map((v,i)=>Math.round((v+(B[i]-v)*ph)*10)/10);
+    drawPose(svg,P);
+    animRAF=requestAnimationFrame(tick);
+  };
+  animRAF=requestAnimationFrame(tick);
+}
+function stopAnim(){if(animRAF){cancelAnimationFrame(animRAF);animRAF=null;}}
 
 const PROGRAM=[
 {id:"push",name:"پوش — سینه، سرشانه، پشت‌بازو",ex:[["bench",4],["incline_db",3],["ohp",3],["lat_raise",3],["triceps_pd",3],["dips",3]]},
@@ -247,7 +299,7 @@ function startSession(dayId,dayName,exList,deload){
 }
 
 function openModal(html){$("#modal").innerHTML=`<div class="grabber"></div>`+html;$("#modal-bg").classList.add("open");}
-function closeModal(){$("#modal-bg").classList.remove("open");}
+function closeModal(){stopAnim();$("#modal-bg").classList.remove("open");}
 
 function render(){
   $("#streak-n").textContent=streak();
@@ -587,10 +639,14 @@ document.addEventListener("click",ev=>{
   if(act==="ex-info"){
     const lib=exById(s.exercises[+el.dataset.i].exId);if(!lib)return;
     const yt=lib.vid?VIDBASE+lib.vid:"https://www.youtube.com/results?search_query="+encodeURIComponent(lib.n+" فرم صحیح");
-    openModal(`<h2>${$esc(lib.n)}</h2><p class="mut" style="margin-bottom:10px">${$esc(lib.eq)} • ${CLSN[lib.cls]}</p>
+    const pat=EXANIM[lib.id]||"press_h";
+    openModal(`<h2>${$esc(lib.n)}</h2>
+    <svg id="exanim" data-pattern="${pat}" viewBox="0 0 120 112" style="width:100%;height:170px;background:var(--card2);border-radius:12px;margin-bottom:6px"></svg>
+    <div class="row" style="justify-content:center;margin-bottom:8px"><span class="chip on">${CLSN[lib.cls]}</span><span class="chip">${$esc(lib.eq)}</span></div>
     <p style="margin-bottom:14px">${$esc(lib.how)}</p>
-    <a class="btn" style="text-decoration:none;display:block;text-align:center" href="${yt}" target="_blank" rel="noopener">دیدن ویدیوی فرم</a>
-    <button class="btn ghost" style="margin-top:8px" data-act="close-modal">بستن</button>`);return;
+    <a class="btn ghost" style="text-decoration:none;display:block;text-align:center" href="${yt}" target="_blank" rel="noopener">ویدیوی کامل یوتیوب</a>
+    <button class="btn" style="margin-top:8px" data-act="close-modal">بستن</button>`);
+    startAnim(document.getElementById("exanim"));return;
   }
   if(act==="finish"){finishWorkout();return;}
   if(act==="discard"){if(confirm("تمرین فعلی حذف شود؟")){S.activeSession=null;save();render();}return;}
@@ -780,7 +836,7 @@ function doSaveWeight(v){
   const m=(location.hash||"").match(/^#tab-(\w+)/);
   const q=(location.search||"").match(/[?&]tab=(\w+)/);
   const t=(m&&m[1])||(q&&q[1]);
-  if(t&&["home","workout","volume","meso","history","settings"].includes(t))ui.tab=t;
+  if(t&&["home","workout","volume","meso","history","knowledge","settings"].includes(t))ui.tab=t;
 })();
 render();
 </script>
