@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head><meta charset="UTF-8"><title>GymLog v2 — Regression Tests</title>
 <style>
@@ -23,6 +23,11 @@ try{
  await waitLoad(fr);
  let W=fr.contentWindow, GL=W.__GL, D=fr.contentDocument;
  if(!GL)throw new Error("GL API missing — app script died");
+ // T0 first-run scope disclaimer
+ const hadDisc=!!D.querySelector("[data-act='ack-scope']");
+ line("T0 first-run scope disclaimer shown", hadDisc, "fresh profile");
+ if(hadDisc){D.querySelector("[data-act='ack-scope']").click(); await sleep(100);}
+ line("T0b disclaimer dismissable", !D.querySelector("[data-act='ack-scope']"), "");
 
  // T1 parse + home renders
  line("T1 app parses & home dashboard renders", D.querySelector("#main").innerHTML.indexOf("start-suggested")>-1, "home");
