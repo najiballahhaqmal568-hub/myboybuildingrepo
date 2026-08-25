@@ -132,6 +132,41 @@ try{
  const werr=(W.__e||[]);
  line("T11 zero console/window errors", werr.length===0, JSON.stringify(werr));
 
+ // T13 progress subtabs render their own bodies
+ GL.go("progress"); await sleep(80);
+ line("T13a week subtab renders volume bars", GL.main().indexOf("vbar")>-1, "");
+ const bchip=D.querySelector('[data-act="psub"][data-v="block"]');
+ if(bchip){bchip.click(); await sleep(80);}
+ line("T13b block subtab renders block body", GL.main().indexOf("meso-weeks")>-1 || GL.main().indexOf("بازنگری")>-1 || GL.main().indexOf("روند حرکات")>-1, "");
+ const lchip=D.querySelector('[data-act="psub"][data-v="log"]');
+ if(lchip){lchip.click(); await sleep(80);}
+ line("T13c log subtab renders session history", GL.main().indexOf("سابقهٔ جلسات")>-1, "");
+
+ // T14 sessbar is non-destructive return-only; finish/cancel live inside Train
+ GL.start("pull"); await sleep(120);
+ GL.go("today"); await sleep(80);
+ const sb=D.getElementById("sessbar");
+ line("T14a sessbar visible off-train with return action", sb.classList.contains("open") && sb.innerHTML.indexOf("go-train")>-1, "");
+ line("T14b sessbar has no destructive buttons", sb.innerHTML.indexOf("'finish'")===-1 && sb.innerHTML.indexOf("'discard'")===-1, "");
+ GL.go("train"); await sleep(80);
+ line("T14c sessbar hidden on train tab", !sb.classList.contains("open"), "");
+ line("T14d finish/cancel inside train view", GL.main().indexOf('data-act="finish"')>-1 && GL.main().indexOf('data-act="discard"')>-1, "");
+ const w2=D.querySelector('input[data-role="w"]'), r2=D.querySelector('input[data-role="r"]');
+ if(w2&&r2){w2.value="30";fire(w2,"change");r2.value="10";fire(r2,"change");await sleep(40);
+   D.querySelector(".done-btn").click(); await sleep(60);}
+ GL.finish(); await sleep(120); const ci2=D.querySelector("[data-act='ci-save']"); if(ci2)ci2.click(); await sleep(150);
+
+ // T15 weekly insight is informational only
+ line("T15 insight card has no target-changing button", GL.main().indexOf("insight-add")===-1, "");
+
+ // T16 screening copy sanity
+ GL.go("profile"); await sleep(80);
+ const rb=D.querySelector("[data-act='scr-reset']");
+ if(rb){rb.click(); await sleep(80);
+  line("T16a screening copy has no garbled word", GL.main().indexOf("دییس")===-1, "");
+  for(let qi=0;qi<6;qi++){const b=D.querySelector('[data-act="scr-set"][data-i="'+qi+'"][data-v="n"]');if(b)b.click();await sleep(20);}
+  D.querySelector("[data-act='scr-save']").click(); await sleep(100);}
+
 }catch(e){
  line("HARNESS EXCEPTION", false, String(e && e.stack ? e.stack.split("\n")[0] : e));
 }

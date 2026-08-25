@@ -102,10 +102,7 @@ table.sets input{width:100%;text-align:center;padding:11px 2px;border-radius:10p
 <div id="sessbar">
   <div class="spread">
     <div class="row"><b id="sb-timer">—</b><span class="mut" id="sb-prog"></span></div>
-    <div class="row">
-      <button class="btn ghost sm" data-act="discard">لغو</button>
-      <button class="btn sm" data-act="finish">پایان ✅</button>
-    </div>
+    <button class="btn sm" data-act="go-train">بازگشت به تمرین</button>
   </div>
 </div>
 <div class="timerbar" id="timerbar">
@@ -438,12 +435,12 @@ function render(){
   if(!(S.screening&&S.screening.done)){
     document.querySelectorAll("#nav button").forEach(b=>{b.disabled=true;b.classList.remove("on");});
     const qs=[
-      "بیماری قلبی، درد یا فشار در قفسهٔ سینه هنگام فعالیت داری؟",
-      "هنگام تمرین سرگیجه یا غش کرده‌ای؟",
-      "پزشک دربارهٔ استخوان/مفصل/دییس حرف زده؟",
-      "فشارخون، دیابت یا داروی قلبی-عروقی مصرف می‌کنی؟",
-      "بارداری یا پس از زایمان اخیر؟",
-      "آسیب فعلی داری که در حال بهبود است؟"
+      "آیا بیماری قلبی تشخیص‌داده‌شده داری یا هنگام فعالیت بدنی درد یا فشار در قفسهٔ سینه حس می‌کنی؟",
+      "آیا هنگام فعالیت بدنی دچار سرگیجه یا بیهوشی (غش) شده‌ای؟",
+      "آیا پزشک برای مشکل استخوان، مفصل یا دیسک (مثلاً دیسک کمر) درمان یا محدودیت فعالیت تجویز کرده است؟",
+      "آیا فشار خون بالا، دیابت یا داروی قلبی‌ـ‌عروقی مصرف می‌کنی؟",
+      "آیا در سه ماه گذشته باردار بوده‌ای یا زایمان کرده‌ای؟",
+      "آیا آسیب یا عمل جراحی داری که هنوز تحت درمان باشد؟"
     ];
     const scr=ui.scr||{};
     const answered=qs.filter((_,i)=>scr[i]).length;
@@ -476,7 +473,7 @@ function render(){
 function syncSessbar(){
   const sb=document.getElementById("sessbar");
   const s=S.activeSession;
-  const show=!!(s&&S.disclaimerSeen&&(S.screening&&S.screening.done));
+  const show=!!(s&&ui.tab!=="train"&&S.disclaimerSeen&&(S.screening&&S.screening.done));
   sb.classList.toggle("open",show);
   if(!show)return;
   const done=s.exercises.reduce((a,e)=>a+e.sets.filter(x=>x.done).length,0);
@@ -564,7 +561,9 @@ function vTrain(){
     </div>
   </div>
   ${s.exercises.map((e,i)=>exCard(e,i,i===ui.openEx)).join("")}
-  <button class="btn ghost" data-act="add-exercise">+ افزودن حرکت</button>`;
+  <button class="btn ghost" data-act="add-exercise">+ افزودن حرکت</button>
+  <button class="btn" style="margin-top:12px" data-act="finish">پایان و ذخیرهٔ تمرین</button>
+  <button class="btn danger" style="margin-top:8px" data-act="discard">لغو تمرین</button>`;
 }
 function recentMini(){
   const last=S.history.slice(-3).reverse();
@@ -654,14 +653,13 @@ function insightCard(ws,r){
   let worst=null;
   MKORDER.forEach(k=>{const t=S.volumeTargets[k]||0;if(!t)return;const ratio=ws[k]/t;if(!worst||ratio<worst.ratio)worst={k,ratio,v:ws[k],t};});
   let o;
-  if(worst&&worst.ratio<0.6)o={rec:"یک ست به "+MK[worst.k]+" اضافه کن",why:"این هفته فقط "+faNum(worst.v)+" از "+faNum(worst.t)+" ست",conf:"متوسط",act:{act:"insight-add",k:worst.k,label:"+۱ ست "+MK[worst.k]}};
+  if(worst&&worst.ratio<0.6)o={rec:MK[worst.k]+" این هفته عقب است",why:"فقط "+faNum(worst.v)+" از "+faNum(worst.t)+" ست — در تمرین بعدی یک ست بیشتر بزن",conf:"متوسط"};
   else if(r!==null&&r>1.5)o={rec:"حجم این هفته را نگه دار",why:"جهش بار نسبت به میانگین",conf:"بالا"};
   else if(streak()>=3)o={rec:"پیوستگی عالی — همین مسیر",why:faNum(streak())+" روز پیوسته",conf:"بالا"};
   else o={rec:"اولین جلسهٔ هفته را ثبت کن",why:"هنوز ست‌ای این هفته نیست",conf:"بالا"};
   return `<div class="card coach"><div class="mut" style="font-size:11px">مربی — بینش هفته</div>
   <div class="spread" style="margin:4px 0"><b>${$esc(o.rec)}</b><span class="conf mut">اطمینان: ${o.conf}</span></div>
   <p class="mut">چرا: ${$esc(o.why)}</p>
-  ${o.act?`<button class="btn sm" style="margin-top:6px" data-act="insight-add" data-k="${o.act.k}">${$esc(o.act.label)}</button>`:""}
   </div>`;
 }
 function chartVolumes(){
@@ -672,6 +670,7 @@ function chartVolumes(){
   return `<div class="vols" style="display:flex;align-items:flex-end;gap:5px;height:84px;padding-top:6px">${last.map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0"><i style="display:block;width:100%;background:var(--acc-dim);border-radius:6px;height:${vols[i]/mx*100}%"></i><span class="mut" style="font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${faDateShort(entryDay(h))}</span><span style="font-size:9px;font-weight:700;color:var(--acc);white-space:nowrap">${faNum(vols[i])}</span></div>`).join("")}</div>`;
 }
 
+function blockSection(){return vMeso();}
 function vMeso(){
   const mi=mesoInfo();
   if(!mi){
@@ -743,7 +742,7 @@ function mesoSessions(){
   return S.history.filter(h=>entryDay(h)>=S.meso.start);
 }
 function trendsFor(){
-  const sess=mesoSessessions();
+  const sess=mesoSessions();
   const agg={};
   sess.forEach(h=>(h.exercises||[]).forEach(e=>{
     const best=e.sets.filter(s=>+s.w>0&&+s.r>0).map(s=>e1rm(+s.w,+s.r));
@@ -858,7 +857,7 @@ function vSettings(){
   </div>
   <div class="card">
     <h2>درباره</h2>
-    <p class="mut">نسخهٔ ۲٫۲ · مبتنی بر ۲۳ سند علمی تدوین‌شده از Renaissance Periodization، Flow High Performance و Huberman/Galpin · آخرین بازبینی شواهد: ۲۰۲۶-۰۸-۲۴ · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/KNOWLEDGE.md" target="_blank" rel="noopener" style="color:var(--blue)">KNOWLEDGE.md</a> · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/POLICY.md" target="_blank" rel="noopener" style="color:var(--blue)">POLICY.md</a></p>
+    <p class="mut">نسخهٔ ۲٫۲٫۱ · مبتنی بر ۲۳ سند علمی تدوین‌شده از Renaissance Periodization، Flow High Performance و Huberman/Galpin · آخرین بازبینی شواهد: ۲۰۲۶-۰۸-۲۴ · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/KNOWLEDGE.md" target="_blank" rel="noopener" style="color:var(--blue)">KNOWLEDGE.md</a> · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/POLICY.md" target="_blank" rel="noopener" style="color:var(--blue)">POLICY.md</a></p>
     <p class="mut" style="margin-top:6px">داده‌ها فقط روی همین دستگاه ذخیره می‌شوند (localStorage). «نشانگر تغییر بار» صرفاً راهنمای افزایش تدریجی است. این اپ مشاور پزشکی نیست — دامنه و مرزها در اولین اجرا پذیرفته شده‌اند.</p>
   </div>`;
 }
@@ -897,11 +896,6 @@ document.addEventListener("click",ev=>{
     delete S.pendingTune;save();render();toast("اعمال شد");return;
   }
   if(act==="tune-reject"){delete S.pendingTune;save();render();toast("رد شد — هدف‌ها دست‌نخورده");return;}
-  if(act==="insight-add"){
-    const k=el.dataset.k;
-    S.volumeTargets[k]=clampTgt(k,(S.volumeTargets[k]||DEF_TGT[k])+1);
-    save();render();toast("۱ ست به "+MK[k]+" اضافه شد");return;
-  }
   if(act==="ack-scope"){S.disclaimerSeen=true;save();render();return;}
   if(act==="scr-set"){
     ui.scr=ui.scr||{};
@@ -1032,6 +1026,7 @@ document.addEventListener("click",ev=>{
   if(act==="wipe"){if(confirm("همه داده‌ها پاک شوند؟")){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);S=loadState();render();toast("پاک شد");}return;}
   if(act==="close-modal"){closeModal();return;}
   if(act==="go-train"){setTab("train");return;}
+  if(act==="psub"){ui.psub=el.dataset.v;render();return;}
   if(act==="timer-skip"){endRest(false);return;}
   if(act==="timer-plus"){ui.rest+=15;return;}
   if(act==="timer-minus"){ui.rest=Math.max(0,ui.rest-15);return;}

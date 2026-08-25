@@ -71,7 +71,8 @@ All distilled research is in `docs/knowledge/` (23 files). Map:
 
 ## Regression tests
 Run the suite (iframe loads the app, exercises real flows):
-`msedge --headless --dump-dom "https://najiballahhaqmal568-hub.github.io/myboybuildingrepo/test.html?v=N`"` then grep TESTSUMMARY pass=/fail= — 22 tests: parse, home render, midnight-safe local dates, one-action start, RIR visible==saved, refresh survival, save→volume+hash, no raw ISO, migration, import validation, zero console errors.
+`msedge --headless --dump-dom "https://najiballahhaqmal568-hub.github.io/myboybuildingrepo/test.html?v=N`"` then grep TESTSUMMARY pass=/fail= — 37 tests: parse, home render, midnight-safe local dates, one-action start, RIR visible==saved, refresh survival, save→volume+hash, no raw ISO, migration, import validation, zero console errors, Progress subtabs (week/block/log), non-destructive sessbar, informational insight card, screening copy sanity.
+Note: file:// blocks iframe DOM access — serve locally over http://127.0.0.1 for local runs.
 
 ## Verification recipe (after every edit)
 
