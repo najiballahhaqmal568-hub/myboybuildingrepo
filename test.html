@@ -167,6 +167,85 @@ try{
   for(let qi=0;qi<6;qi++){const b=D.querySelector('[data-act="scr-set"][data-i="'+qi+'"][data-v="n"]');if(b)b.click();await sleep(20);}
   D.querySelector("[data-act='scr-save']").click(); await sleep(100);}
 
+ async function setRow(i,j,w,r){const wi=D.querySelector('input[data-role="w"][data-i="'+i+'"][data-j="'+j+'"]'),ri=D.querySelector('input[data-role="r"][data-i="'+i+'"][data-j="'+j+'"]');wi.value=String(w);fire(wi,"change");ri.value=String(r);fire(ri,"change");await sleep(20);}
+ async function tickRow(i,j,w,r){await setRow(i,j,w,r);D.querySelector('[data-act="toggle-set"][data-i="'+i+'"][data-j="'+j+'"]').click();await sleep(50);}
+ async function openEx(i){const c=D.querySelector('[data-act="open-ex"][data-i="'+i+'"]');if(c){c.click();await sleep(60);}}
+ async function saveCheckin(){const b=D.querySelector("[data-act='ci-save']");if(b)b.click();await sleep(150);}
+ const lastH=()=>GL.state().history[GL.state().history.length-1];
+
+ // T17 only ticked sets are saved
+ delete GL.state().erPref;
+ GL.start("push"); await sleep(120);
+ const b17=GL.state().activeSession.exercises[0].sets[0];
+ line("T17a bench prefilled from last push", String(b17.w)==="40"&&!b17.done, JSON.stringify(b17));
+ await openEx(1); await tickRow(1,0,20,10);
+ line("T19a compound rest = 2 min", GL.rest()>100&&GL.rest()<=120, String(GL.rest()));
+ await openEx(3); await tickRow(3,0,8,15);
+ line("T19b isolation rest = 90 s", GL.rest()>75&&GL.rest()<=90, String(GL.rest()));
+ line("T19c heavy compound rest = 3 min", GL.restFor("squat")===180, String(GL.restFor("squat")));
+ W.confirm=()=>true; GL.finish(); await sleep(120); await saveCheckin();
+ const h17=lastH();
+ line("T17b untouched prefilled exercise not saved", h17.exercises.map(e=>e.exId).join()==="incline_db,lat_raise", h17.exercises.map(e=>e.exId).join());
+ line("T17c session volume counts ticked sets only", h17.volume===20*10+8*15, String(h17.volume));
+ GL.start("pull"); await sleep(120);
+ await setRow(0,0,35,10);
+ await openEx(1); await tickRow(1,0,40,10);
+ W.confirm=()=>false; GL.finish(); await sleep(100);
+ line("T17d edited unticked set asks before dropping", !!GL.state().activeSession, "");
+ W.confirm=()=>true; GL.finish(); await sleep(120); await saveCheckin();
+ line("T17e confirmed finish drops the unticked set", !GL.state().activeSession&&lastH().exercises.map(e=>e.exId).join()==="pulldown", lastH().exercises.map(e=>e.exId).join());
+
+ // T18 Effective Reps (ER) mode
+ GL.start("push"); await sleep(120);
+ GL.go("train"); await sleep(60);
+ line("T18a ER not offered on barbell bench", !D.querySelector('[data-act="er-toggle"][data-i="0"]'), "");
+ await openEx(1);
+ const tg=D.querySelector('[data-act="er-toggle"][data-i="1"]');
+ line("T18b ER offered on dumbbell incline", !!tg, "");
+ if(tg){tg.click(); await sleep(60);}
+ let e18=GL.state().activeSession.exercises[1];
+ line("T18c ER layout: ignition + one mini row, goal 20", e18.er===20&&e18.sets.length===2&&e18.sets[0].t==="ig"&&e18.sets[1].t==="er", JSON.stringify(e18.sets));
+ const rirEr=D.querySelector('input[data-role="rir"][data-i="1"][data-j="1"]');
+ line("T18d ER rows default to RIR 0", !!rirEr&&rirEr.value==="0", rirEr?rirEr.value:"none");
+ await tickRow(1,0,20,11);
+ line("T18e ER rest = 20 s after ignition", GL.rest()>15&&GL.rest()<=20, String(GL.rest()));
+ const minis=[5,4,4,4,3];
+ for(let k=0;k<minis.length;k++){if(D.querySelector('input[data-role="r"][data-i="1"][data-j="'+(k+1)+'"]'))await tickRow(1,k+1,20,minis[k]);}
+ e18=GL.state().activeSession.exercises[1];
+ line("T18f mini rows added until goal, none after", e18.sets.length===6&&e18.sets.every(x=>x.done), String(e18.sets.length));
+ line("T18g counter shows ER 20/20", GL.main().indexOf("ER ۲۰/۲۰")>-1, "");
+ await openEx(5);
+ const dt=D.querySelector('[data-act="er-toggle"][data-i="5"]');
+ if(dt){dt.click(); await sleep(60);}
+ line("T18h dips default goal = 10", GL.state().activeSession.exercises[5].er===10, String(GL.state().activeSession.exercises[5].er));
+ const dt2=D.querySelector('[data-act="er-toggle"][data-i="5"]');
+ if(dt2){dt2.click(); await sleep(60);}
+ const d18=GL.state().activeSession.exercises[5];
+ line("T18i ER can be switched off", !d18.er&&d18.sets.every(x=>!x.t), JSON.stringify(d18.sets));
+ const wsB=GL.weekSets();
+ W.confirm=()=>true; GL.finish(); await sleep(120); await saveCheckin();
+ const wsA=GL.weekSets();
+ const hx=(lastH().exercises||[]).find(e=>e.exId==="incline_db")||{sets:[]};
+ line("T18j history keeps ER goal and set tags", hx.er===20&&hx.sets[0].t==="ig"&&hx.sets.filter(x=>x.t==="er").length===5, JSON.stringify(hx));
+ line("T18k ER block counts 1 + ERs/5 = 5 chest sets", Math.abs((wsA.chest-wsB.chest)-5)<0.01, String(wsA.chest-wsB.chest));
+ line("T18l indirect triceps = half", Math.abs((wsA.triceps-wsB.triceps)-2.5)<0.01, String(wsA.triceps-wsB.triceps));
+ GL.start("push"); await sleep(120);
+ const e18n=GL.state().activeSession.exercises[1];
+ line("T18m ER remembered next session, ignition prefilled", e18n.er===20&&e18n.sets[0].t==="ig"&&String(e18n.sets[0].w)==="20"&&String(e18n.sets[0].r)==="11", JSON.stringify(e18n.sets));
+ W.confirm=()=>true; D.querySelector('[data-act="discard"]').click(); await sleep(80);
+
+ // T20 exercise library additions + ER eligibility
+ line("T20a dumbbell bench and new machines in library", ["db_bench","chest_press","cable_row","rear_fly","oh_ext","hack_squat","bss"].every(id=>!!GL.ex(id)), "");
+ line("T20b ER eligibility rules", GL.erOK("db_bench")&&GL.erOK("curl_bb")&&!GL.erOK("squat")&&!GL.erOK("bench")&&!GL.erOK("hip_thrust")&&!GL.erOK("plank"), "");
+
+ // T21 backup reminder
+ delete GL.state().lastBackup;
+ GL.go("today"); await sleep(80);
+ line("T21a backup nudge shown when never backed up", GL.main().indexOf("data-backup-nudge")>-1, "");
+ const bk=D.querySelector('[data-backup-nudge] [data-act="export"]');
+ if(bk){bk.click(); await sleep(120);}
+ line("T21b export records date and hides nudge", GL.state().lastBackup===GL.today()&&GL.main().indexOf("data-backup-nudge")===-1, String(GL.state().lastBackup));
+
 }catch(e){
  line("HARNESS EXCEPTION", false, String(e && e.stack ? e.stack.split("\n")[0] : e));
 }
