@@ -33,14 +33,16 @@ Per-file versions live under docs/knowledge/ (raw fetch works per file too). If 
 ```json
 {
   "version": 2,
-  "settings": { "rir": true },
+  "settings": { "rir": true, "erRest": 20 },
   "meso": { "start": "YYYY-MM-DD", "weeks": 4, "deloadFirst": true },
   "volumeTargets": { "chest":12, "back":12, "quads":9, "hams":9, "delts":8, "biceps":8, "triceps":8, "calves":6, "abs":4 },
   "history": [ { "date":"ISO", "dayId":"push|pull|legs|free", "dayName":"...", "durationMin":n,
                  "volume":kg, "deload":bool, "checkin":{"sore":0-3,"joint":bool},
-                 "exercises":[ {"exId","name","sets":[{"w","r","rir"}]} ] } ],
+                 "exercises":[ {"exId","name","er"?:goal,"sets":[{"w","r","rir","t"?:"ig|er"}]} ] } ],
   "prs": { "<exId>": {"w","r","date"} },
   "weights": [ {"date","kg"} ],
+  "erPref": { "<exId>": 10|20 },
+  "lastBackup": "YYYY-MM-DD",
   "activeSession": null | {...}
 }
 ```
@@ -52,7 +54,10 @@ Per-file versions live under docs/knowledge/ (raw fetch works per file too). If 
 - `MK` / `MKORDER` — muscle keys ↔ Dari labels
 - Views: `vHome / vWorkout / vVolume / vMeso / vHistory / vSettings`, dispatched by `render()` via `ui.tab`
 - Tabs are deep-linkable: `?tab=volume` or `#tab-volume` (home/workout/volume/meso/history/settings)
-- Key systems: mesocycle state (`mesoInfo`, deload = week 1 at ~half sets), weekly volume per muscle incl. indirect counting (`weekSets`), ACWR spike ratio (`acwr`), per-exercise trend within block (`trendsFor`), end-of-meso review wizard (`reviewHTML` steps 1–3), post-workout check-in modal feeding recovery flags, rest timer, PR detection via estimated 1RM.
+- Key systems: mesocycle state (`mesoInfo`, deload = week 1 at ~half sets), weekly volume per muscle incl. indirect counting (`weekSets`), ACWR spike ratio (`acwr`), per-exercise trend within block (`trendsFor`), end-of-meso review wizard (`reviewHTML` steps 1–3), post-workout check-in modal feeding recovery flags, rest timer by class (`restFor`), PR detection via estimated 1RM.
+- Effective Reps (ER) mode: `erOK` (eligibility), `erLayout` / `withEr` (ignition + mini rows, remembered per exercise in `erPref`), `erReps`, `erPanel` (counter, goal, rest chips). Set rows carry `t:"ig"|"er"`; the exercise carries `er` (goal). `setCount` counts an ER block as 1 + ERs/5 sets for `weekSets` and history.
+- Only ✓ (done) sets are saved by `finishWorkout`; `ed` marks rows the user edited so unticked edits trigger a confirm.
+- Backup nudge on Today when `lastBackup` is missing or older than 14 days (`export` sets it).
 
 ## The science behind every feature (read on demand)
 
@@ -68,10 +73,12 @@ All distilled research is in `docs/knowledge/` (23 files). Map:
 | Injury prevention, ACWR | `fhp-injury--NOTES.md` |
 | Assessment benchmarks, health metrics | `huberman-galpin-series--ep1-assessment.md`, `galpin-performance--NOTES.md` |
 | Strength vs hypertrophy fundamentals | `huberman-galpin-series--ep2-strength-muscle.md`, `fhp-overload-specificity--NOTES.md` |
+| ER mode (myo-reps / rest-pause), rest by class | KNOWLEDGE.md "Training modalities" + "Rest"; decisions in `POLICY.md` |
 
 ## Regression tests
 Run the suite (iframe loads the app, exercises real flows):
-`msedge --headless --dump-dom "https://najiballahhaqmal568-hub.github.io/myboybuildingrepo/test.html?v=N`"` then grep TESTSUMMARY pass=/fail= — 37 tests: parse, home render, midnight-safe local dates, one-action start, RIR visible==saved, refresh survival, save→volume+hash, no raw ISO, migration, import validation, zero console errors, Progress subtabs (week/block/log), non-destructive sessbar, informational insight card, screening copy sanity.
+`msedge --headless --dump-dom "https://najiballahhaqmal568-hub.github.io/myboybuildingrepo/test.html?v=N`"` then grep TESTSUMMARY pass=/fail= — 62 tests: parse, home render, midnight-safe local dates, one-action start, RIR visible==saved, refresh survival, save→volume+hash, no raw ISO, migration, import validation, zero console errors, Progress subtabs (week/block/log), non-destructive sessbar, informational insight card, screening copy sanity, only-ticked-sets saving (T17), ER mode (T18), rest by class (T19), library additions + ER eligibility (T20), backup nudge (T21).
+Run with `?fresh=1` for a clean profile. T12 assumes no bench history, so it fails on a second run against saved data.
 Note: file:// blocks iframe DOM access — serve locally over http://127.0.0.1 for local runs.
 
 ## Verification recipe (after every edit)

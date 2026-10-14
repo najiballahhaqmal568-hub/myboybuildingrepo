@@ -45,7 +45,7 @@ main{max-width:560px;margin:0 auto;padding:14px 14px 20px}
 .bar>i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .4s}
 .bar.blue>i{background:var(--blue)}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(23,26,33,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px);display:flex;justify-content:space-around;padding:6px 2px calc(8px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
-nav button{background:none;border:none;color:var(--mut);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;flex:1;padding:5px 0}
+nav button{background:none;border:none;color:var(--mut);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;flex:1;padding:5px 0}
 nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav button.on{color:var(--acc);font-weight:700}
 #nav button:disabled{opacity:.35;pointer-events:none}
@@ -78,6 +78,12 @@ table.sets input{width:100%;text-align:center;padding:11px 2px;border-radius:10p
 .timerbar b{font-size:24px;color:var(--acc);font-variant-numeric:tabular-nums}
 .vbar{margin:7px 0}
 .vbar .spread{margin-bottom:3px;font-size:13px}
+.vols{display:flex;flex-direction:column;gap:6px}
+.vrow{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:8px;font-size:12px}
+.vrow .mut{font-size:12px;white-space:nowrap}
+.vtrack{display:flex;align-items:center;gap:6px;min-width:0}
+.vtrack i{display:block;flex-shrink:0;height:14px;min-width:2px;background:var(--acc-dim);border-radius:0;border-start-end-radius:4px;border-end-end-radius:4px}
+.vtrack b{font-weight:700;color:var(--txt);white-space:nowrap}
 .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);z-index:60;background:var(--acc);color:#0f1115;font-weight:800;border-radius:12px;padding:10px 20px;transition:transform .3s;font-size:14px;max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .pr{color:var(--amber);font-weight:800;font-size:11.5px}
@@ -89,6 +95,7 @@ table.sets input{width:100%;text-align:center;padding:11px 2px;border-radius:10p
 .pain{color:var(--red)}
 .coach{border-color:var(--acc)}
 .coach .conf{font-size:11px;color:var(--mut)}
+.erbox{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
 .thumb{width:100%;border-radius:12px;display:block;margin-bottom:8px;background:var(--card2);min-height:60px}
 </style>
 </head>
@@ -137,6 +144,8 @@ const CLSN={H:"کمپاند سنگین (RIR ۲–۳)",C:"کمپاند (RIR ۱–
 const LIB=[
 {id:"bench",n:"بنچ‌پرس هالتر",mk:"chest",sec:["triceps"],cls:"C",eq:"هالتر",vid:"mFQ22MTKlBc",how:"پاها محکم، کتف جمع، تا سینه پایین بیاور و بالا ببر؛ آرنج ~۴۵ درجه."},
 {id:"incline_db",n:"پرس بالاسینه دمبل",mk:"chest",sec:["triceps"],cls:"C",eq:"دمبل",vid:"sbE2PlWJW5U",how:"شیب ۳۰ درجه؛ دمبل‌ها از سطح سینه بالا، کنترل کامل پایین."},
+{id:"db_bench",n:"پرس سینه دمبل",mk:"chest",sec:["triceps"],cls:"C",eq:"دمبل",how:"کتف جمع و پاها محکم؛ دمبل‌ها تا کنار سینه پایین برای کشش کامل، بعد بالا بدون کوبیدن به هم."},
+{id:"chest_press",n:"پرس سینه دستگاه",mk:"chest",sec:["triceps"],cls:"C",eq:"دستگاه",how:"صندلی را طوری تنظیم کن که دسته‌ها هم‌سطح وسط سینه باشند؛ کتف چسبیده به پشتی؛ برگشت کنترل‌شده."},
 {id:"pushup",n:"شنا سوئدی",mk:"chest",sec:["triceps"],cls:"C",eq:"بدن",vid:"2o0lPbqg8BI",how:"بدن صاف مثل تخته؛ سینه به زمین، بدون مکث کف."},
 {id:"cable_cross",n:"کراس اور سیم‌کش",mk:"chest",sec:[],cls:"I",eq:"سیم‌کش",vid:"DQ9BTTmJQNI",how:"از بالا به وسط سینه؛ tension را در کل مسیر نگه دار، پرش ممنوع."},
 {id:"ohp",n:"پرس سرشانه هالتر",mk:"delts",sec:["triceps"],cls:"C",eq:"هالتر",vid:"Uj52XT-g6rA",how:"ایستاده، از چانه تا بالای سر؛ کمر اغراق‌آمیز خم نشود."},
@@ -144,12 +153,15 @@ const LIB=[
 {id:"dips",n:"پارالل (دیپس)",mk:"chest",sec:["triceps"],cls:"C",eq:"بدن",vid:"glFxfhN5lio",how:"تنه کمی جلو برای سینه؛ عمق تا احساس کشش، بدون پرش از پایین."},
 {id:"triceps_pd",n:"پشت‌بازو سیم‌کش طناب",mk:"triceps",sec:[],cls:"I",eq:"سیم‌کش",vid:"LhtxET_siU0",how:"آرنج چسبیده؛ فقط ساعد؛ در انتها طناب را کمی باز کن."},
 {id:"skull",n:"اسکال‌کرشر",mk:"triceps",sec:[],cls:"I",eq:"دمبل",vid:"wzTNBjNY8dA",how:"اول آرنج به سمت لگن بشکند بعد ساعد پایین — نجات‌دهندهٔ آرنج."},
+{id:"oh_ext",n:"پشت‌بازو سیم‌کش بالای سر",mk:"triceps",sec:[],cls:"I",eq:"سیم‌کش",how:"پشت به دستگاه، آرنج‌ها کنار سر؛ تا کشش کامل پایین ببر — سر بلند پشت‌بازو در حالت کشیده بهتر رشد می‌کند."},
 {id:"deadlift",n:"ددلیفت",mk:"hams",sec:["back"],cls:"H",eq:"هالتر",vid:"uB_c9jpyieg",how:"کمر خنثی؛ وزنه چسبیده به بدن؛ از پا بران، نه از کمر. فرم > وزنه."},
 {id:"pullup",n:"بارفیکس",mk:"back",sec:["biceps"],cls:"C",eq:"بدن",vid:"P2luagd0TX8",how:"کتف را جمع کن؛ چانه بالای میله؛ کنترل پایین‌آمدن."},
 {id:"pulldown",n:"زیربغل سیم‌کش از جلو",mk:"back",sec:["biceps"],cls:"C",eq:"سیم‌کش",vid:"Ph_xGA-HC-o",how:"سینه بالا، شانه پایین؛ میله تا بالای سینه؛ کتف جمع در انتها."},
 {id:"row_bb",n:"زیربغل هالتر خم",mk:"back",sec:["biceps"],cls:"C",eq:"هالتر",vid:"_ywgRWBmGyQ",how:"تنه ~۴۵ درجه؛ به سمت شکم بکش؛ کمر صاف ثابت."},
 {id:"row_db",n:"زیربغل تک‌دمبل",mk:"back",sec:["biceps"],cls:"C",eq:"دمبل",vid:"pgZgueSYycA",how:"یک زانو روی نیمکت؛ به سمت لگن بکش، نه سینه."},
+{id:"cable_row",n:"زیربغل سیم‌کش نشسته",mk:"back",sec:["biceps"],cls:"C",eq:"سیم‌کش",how:"سینه بالا؛ دسته را به سمت ناف بکش و کتف را جمع کن؛ در برگشت بگذار کتف کامل باز شود."},
 {id:"face_pull",n:"فییس‌پول",mk:"delts",sec:["back"],cls:"I",eq:"سیم‌کش",vid:"gWRREo_YdUw",how:"طناب به سمت صورت؛ آرنج‌های بازتر از دست‌ها؛ کتف جمع."},
+{id:"rear_fly",n:"فلای معکوس دستگاه",mk:"delts",sec:["back"],cls:"I",eq:"دستگاه",how:"دست‌ها تقریباً صاف؛ با پشت شانه به عقب باز کن، نه با جمع‌کردن کتف؛ آهسته برگردان."},
 {id:"shrug",n:"شراگ دمبل",mk:"back",sec:[],cls:"I",eq:"دمبل",how:"شانه مستقیم بالا به گوش‌ها؛ نچرخان؛ یک لحظه مکش بالا."},
 {id:"curl_bb",n:"جلوبازو هالتر",mk:"biceps",sec:[],cls:"I",eq:"هالتر",vid:"HDYZpA5_Re0",how:"آرنج ثابت کنار بدن؛ بدون تاب دادن تنه."},
 {id:"hammer_curl",n:"چکشی دمبل",mk:"biceps",sec:[],cls:"I",eq:"دمبل",vid:"0WhYkP9B2b4",how:"گیر عمودی؛ براکیالیس را هدف می‌گیرد — ضخامت بازو."},
@@ -158,6 +170,8 @@ const LIB=[
 {id:"squat",n:"اسکوات هالتر",mk:"quads",sec:["hams"],cls:"H",eq:"هالتر",vid:"a_zztDLx8-w",how:"پاشنه‌ها زمین؛ تا موازی یا کمتر؛ زانو هم‌راستا پنجه. فرم > عمق اجباری."},
 {id:"rdl",n:"ددلیفت رومانیایی",mk:"hams",sec:["back"],cls:"H",eq:"هالتر",vid:"AnXiXsJJbio",how:"زانو کم‌خم؛ لگن به عقب؛ وزنه چسبیده پا تا حس کشش عمیق همسترینگ."},
 {id:"leg_press",n:"پرس پا دستگاه",mk:"quads",sec:[],cls:"C",eq:"دستگاه",how:"پاها عرض شانه؛ عمق تا ~۹۰ درجه؛ کمر از صندلی جدا نشود."},
+{id:"hack_squat",n:"هاک اسکوات دستگاه",mk:"quads",sec:[],cls:"C",eq:"دستگاه",how:"پشت چسبیده به پد؛ تا جایی پایین برو که کمر جدا نشود؛ زانو هم‌راستای پنجه."},
+{id:"bss",n:"اسکوات بلغاری دمبل",mk:"quads",sec:["hams"],cls:"C",eq:"دمبل",how:"پای عقب روی نیمکت؛ تنه کمی جلو؛ زانوی جلو هم‌راستای پنجه؛ تکرار یک پا را ثبت کن."},
 {id:"leg_ext",n:"جلو پا دستگاه",mk:"quads",sec:[],cls:"I",eq:"دستگاه",vid:"6X1f7xhkliI",how:"مهم‌ترین حرکت برای راست‌رانی؛ مکش یک لحظه بالا."},
 {id:"leg_curl",n:"پشت پا دستگاه",mk:"hams",sec:[],cls:"I",eq:"دستگاه",vid:"b_jAyOmHJYU",how:"نشسته = تمرین در حالت کشیده (بهتر!)؛ آهسته برگردان."},
 {id:"calf",n:"ساق پا ایستاده",mk:"calves",sec:[],cls:"I",eq:"دستگاه",vid:"a1tK1gwk7TM",how:"بدون پرش! کشش کامل پایین، مکش بالا؛ نصف پا روی لبه."},
@@ -168,7 +182,7 @@ const LIB=[
 ];
 const VIDBASE="https://www.youtube.com/watch?v=";
 const THUMB=id=>"https://i.ytimg.com/vi/"+id+"/hqdefault.jpg";
-const EXANIM={bench:"press_h",incline_db:"press_h",pushup:"press_h",dips:"dip",cable_cross:"fly",ohp:"press_v",lat_raise:"latraise",face_pull:"facepull",triceps_pd:"pushdown",skull:"skull",deadlift:"hinge",rdl:"hinge",hip_thrust:"thrust",pullup:"pullv",pulldown:"pullv",row_bb:"row",row_db:"row",shrug:"shrug",curl_bb:"curl",hammer_curl:"curl",preacher:"curl",incline_curl:"curl",squat:"squat",leg_press:"squat",leg_ext:"legext",leg_curl:"legcurl",calf:"calf",plank:"plank",crunch:"crunch",leg_raise:"crunch"};
+const EXANIM={bench:"press_h",incline_db:"press_h",db_bench:"press_h",chest_press:"press_h",cable_row:"row",rear_fly:"facepull",oh_ext:"press_v",hack_squat:"squat",bss:"squat",pushup:"press_h",dips:"dip",cable_cross:"fly",ohp:"press_v",lat_raise:"latraise",face_pull:"facepull",triceps_pd:"pushdown",skull:"skull",deadlift:"hinge",rdl:"hinge",hip_thrust:"thrust",pullup:"pullv",pulldown:"pullv",row_bb:"row",row_db:"row",shrug:"shrug",curl_bb:"curl",hammer_curl:"curl",preacher:"curl",incline_curl:"curl",squat:"squat",leg_press:"squat",leg_ext:"legext",leg_curl:"legcurl",calf:"calf",plank:"plank",crunch:"crunch",leg_raise:"crunch"};
 const PATTERNS={
 press_h:{prop:"bar",a:[92,58,82,62,78,52,77,46,42,68,28,74,14,78],b:[92,58,82,62,79,38,78,28,42,68,28,74,14,78]},
 press_v:{prop:"bar",a:[60,16,58,30,52,44,50,58,56,64,54,84,52,102],b:[60,16,58,30,64,20,66,10,56,64,54,84,52,102]},
@@ -264,7 +278,27 @@ function setTab(t){ui.tab=normTab(t);try{location.hash="tab-"+ui.tab;}catch(e){}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove("show"),2400);}
 function exById(id){return LIB.find(e=>e.id===id);}
 function e1rm(w,r){return w*Math.max(1,1+r/30);}
-function volOf(wsess){let v=0;(wsess.exercises||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.w&&s.r)v+=s.w*s.r;}));return Math.round(v);}
+function volOf(wsess){let v=0;(wsess.exercises||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.w&&s.r&&s.done!==false)v+=s.w*s.r;}));return Math.round(v);}
+const REST={H:180,C:120,I:90};
+function restFor(lib){return REST[lib&&lib.cls]||90;}
+function erOK(lib){return !!lib&&lib.id!=="plank"&&!(lib.eq==="هالتر"&&lib.cls!=="I");}
+function erGoalDef(lib){return lib&&(lib.id==="dips"||lib.id==="pullup")?10:20;}
+function erReps(e){return (e.sets||[]).filter(s=>s.t==="er"&&s.done!==false).reduce((a,s)=>a+(+s.r||0),0);}
+function setCount(e){
+  const rows=(e.sets||[]).filter(s=>s.w||s.r);
+  return rows.filter(s=>s.t!=="er").length+erReps({sets:rows})/5;
+}
+function erLayout(e,goal){
+  const f=e.sets[0]||{w:"",r:""};
+  e.er=goal;
+  e.sets=[{w:f.w,r:f.r,t:"ig",done:false},{w:f.w,r:"",t:"er",done:false}];
+  return e;
+}
+function withEr(e,f){
+  const lib=exById(e.exId),g=S.erPref&&S.erPref[e.exId];
+  if(!g||!erOK(lib))return e;
+  return erLayout(e,f?Math.max(5,Math.round(g*f/5)*5):g);
+}
 
 function streak(){
   const done=new Set(S.history.map(h=>entryDay(h)));
@@ -374,7 +408,7 @@ function weekSets(){
     if(entryDay(h)<cutoff)return;
     (h.exercises||[]).forEach(e=>{
       const lib=exById(e.exId);if(!lib)return;
-      const n=(e.sets||[]).filter(s=>s.w||s.r).length;
+      const n=setCount(e);
       if(n){out[lib.mk]=(out[lib.mk]||0)+n;(lib.sec||[]).forEach(m=>out[m]=(out[m]||0)+n*0.5);}
     });
   });
@@ -405,8 +439,8 @@ function startSession(dayId,dayName,exList,deload){
       let tgt=soft||red?Math.max(2,Math.round(baseSets*(deload?0.5:0.75))):baseSets;
       let sets=prev.length?prev.slice(0,Math.max(tgt,Math.min(prev.length,tgt+1))):[];
       while(sets.length<tgt)sets.push({w:"",r:""});
-      return {exId:id,name:lib.n,cls:lib.cls,target:tgt,
-        sets:sets.map(s=>({w:s.w,r:s.r,done:false}))};
+      return withEr({exId:id,name:lib.n,cls:lib.cls,target:tgt,
+        sets:sets.map(s=>({w:s.w,r:s.r,done:false}))},soft||red?(deload?0.5:0.75):0);
     })
   };
   ui.openEx=null;
@@ -516,6 +550,7 @@ function vToday(){
       <div class="stat"><b>${faNum(S.history.length)}</b><span>کل جلسات</span></div>
       <div class="stat"><b>${S.weights.length?faNum(S.weights[S.weights.length-1].kg):"—"}</b><span>وزن (کگ)</span></div>
     </div>`);
+    if(S.history.length>=3&&(!S.lastBackup||S.lastBackup<daysAgoKey(14)))parts.push(`<div class="card" data-backup-nudge style="border-color:var(--blue)"><b>پشتیبان بگیر</b><p class="mut" style="margin-top:4px">${S.lastBackup?"آخرین پشتیبان: "+fmtDate(S.lastBackup):"هنوز پشتیبان نگرفته‌ای"} — داده‌ها فقط روی همین گوشی است و با پاک‌شدن مرورگر از بین می‌رود.</p><button class="btn ghost" style="margin-top:10px" data-act="export">دانلود فایل پشتیبان</button></div>`);
     if(mi&&mi.done)parts.push(`<div class="card" style="border-color:var(--amber)"><b>بلوک تمام شد 🎉</b><p class="mut" style="margin-top:4px">بازنگری ۶۰ ثانیه‌ای قبل از بلوک بعد.</p><button class="btn" style="margin-top:10px" data-act="open-review">شروع بازنگری</button></div>`);
   }
   return parts.join("");
@@ -583,7 +618,7 @@ function exCard(e,i,open){
   const sg=suggestNext(e.exId);
   if(!open){
     return `<div class="acc-card" data-act="open-ex" data-i="${i}">
-      <div class="spread"><b>${$esc(e.name)}</b><span class="mut">${faNum(doneN)}/${faNum(e.sets.length)} ست</span></div>
+      <div class="spread"><b>${$esc(e.name)}</b><span class="mut">${e.er?"ER "+faNum(erReps(e))+"/"+faNum(e.er):faNum(doneN)+"/"+faNum(e.sets.length)+" ست"}</span></div>
       <span class="mut">${doneN?e.sets.filter(x=>x.done).map(x=>faNum(x.w)+"×"+faNum(x.r)).join(" ، "):prevSummary(e.exId)||"شروع با RIR "+faNum(defRir(lib))}</span>
     </div>`;
   }
@@ -596,12 +631,13 @@ function exCard(e,i,open){
       ${sg&&sg.txt?`<span class="chip on" style="margin-top:4px;display:inline-block;font-size:11.5px">${$esc(sg.txt)}</span> <span class="mut" style="font-size:11px">چرا: ${$esc(sg.why)} • ${$esc(sg.conf)}</span>`:""}</div>
       <button class="btn ghost sm" aria-label="حذف حرکت" data-act="del-exercise" data-i="${i}">✕</button>
     </div>
+    ${erPanel(e,i,lib)}
     <table class="sets"><thead><tr><th style="width:30px">ست</th><th>وزن</th><th>تکرار</th>${S.settings.rir?"<th>RIR</th>":""}<th style="width:46px">✓</th></tr></thead><tbody>
     ${e.sets.map((st,j)=>`<tr class="${st.done?"setdone":""}">
-      <td style="text-align:center;color:var(--mut)">${j+1}</td>
+      <td style="text-align:center;color:${st.t==="ig"?"var(--amber)":"var(--mut)"}">${st.t==="ig"?"⚡":st.t==="er"?j:j+1}</td>
       <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${st.w}" placeholder="${prev[j]?prev[j].w:""}" aria-label="وزن ست ${j+1} به کیلوگرم" data-role="w" data-i="${i}" data-j="${j}"></td>
       <td><input type="number" min="0" inputmode="numeric" value="${st.r}" placeholder="${prev[j]?prev[j].r:""}" aria-label="تکرارهای ست ${j+1}" data-role="r" data-i="${i}" data-j="${j}"></td>
-      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir===""||st.rir===undefined||st.rir===null?defRir(lib):st.rir}" aria-label="RIR هدف ست ${j+1}" title="هدف RIR" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
+      ${S.settings.rir?`<td><input type="number" min="0" max="10" inputmode="numeric" value="${st.rir===""||st.rir===undefined||st.rir===null?(st.t?0:defRir(lib)):st.rir}" aria-label="RIR هدف ست ${j+1}" title="هدف RIR" data-role="rir" data-i="${i}" data-j="${j}"></td>`:""}
       <td style="text-align:center"><button class="done-btn ${st.done?"did":""}" aria-label="ثبت ست ${j+1}" data-act="toggle-set" data-i="${i}" data-j="${j}">✓</button></td>
     </tr>`).join("")}
     </tbody></table>
@@ -609,6 +645,19 @@ function exCard(e,i,open){
       <button class="btn ghost sm" data-act="add-set" data-i="${i}">+ ست</button>
       ${isPrLive(e)?`<span class="pr">رکورد جدید!</span>`:""}
     </div>
+  </div>`;
+}
+function erRest(){return (S.settings&&S.settings.erRest)||20;}
+function erPanel(e,i,lib){
+  if(!erOK(lib))return "";
+  if(!e.er)return e.sets.some(x=>x.done)?"":`<button class="chip" style="margin-top:8px" data-act="er-toggle" data-i="${i}">⚡ حالت ER (تکرار مؤثر)</button>`;
+  const n=erReps(e);
+  return `<div class="erbox">
+    <div class="spread"><b>ER ${faNum(n)}/${faNum(e.er)}</b>
+      <span class="row"><span class="mut" style="font-size:11.5px">هدف</span>${[10,20].map(v=>`<button class="chip ${e.er===v?"on":""}" data-act="er-goal" data-i="${i}" data-v="${v}">${faNum(v)}</button>`).join("")}<button class="chip" data-act="er-toggle" data-i="${i}">خاموش</button></span></div>
+    <div class="bar" style="margin:8px 0 6px"><i style="width:${Math.min(100,n/e.er*100)}%"></i></div>
+    <span class="mut" style="font-size:11.5px">⚡ ست آغاز با وزنهٔ ۱۰–۱۲ تکراری، تا جایی که فرم خراب شود (شمرده نمی‌شود) ← استراحت کوتاه ← مینی‌ست تا خراب‌شدن فرم. هر تکرار مینی‌ست = ۱ ER.</span>
+    <div class="row" style="margin-top:8px"><span class="mut" style="font-size:11.5px">استراحت</span>${[15,20,30].map(v=>`<button class="chip ${erRest()===v?"on":""}" data-act="er-rest" data-v="${v}">${faNum(v)} ث</button>`).join("")}</div>
   </div>`;
 }
 function defRir(lib){return lib?(lib.cls==="H"?2:lib.cls==="C"?1:1):1;}
@@ -645,7 +694,7 @@ function weekSection(){
     }).join("")}
   </div>
   <div class="card">
-    <h2>حجم تمرینی (۸ جلسه اخیر)</h2>
+    <h2>حجم تمرینی (کگ، ۸ جلسهٔ اخیر)</h2>
     ${chartVolumes()}
   </div>`;
 }
@@ -663,11 +712,11 @@ function insightCard(ws,r){
   </div>`;
 }
 function chartVolumes(){
-  const last=S.history.slice(-8);
+  const last=S.history.slice(-8).reverse();
   if(!last.length)return `<p class="empty">هنوز جلسه‌ای نیست.</p>`;
   const vols=last.map(h=>h.volume||volOf(h));
   const mx=Math.max(...vols,1);
-  return `<div class="vols" style="display:flex;align-items:flex-end;gap:5px;height:84px;padding-top:6px">${last.map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0"><i style="display:block;width:100%;background:var(--acc-dim);border-radius:6px;height:${vols[i]/mx*100}%"></i><span class="mut" style="font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">${faDateShort(entryDay(h))}</span><span style="font-size:9px;font-weight:700;color:var(--acc);white-space:nowrap">${faNum(vols[i])}</span></div>`).join("")}</div>`;
+  return `<div class="vols">${last.map((h,i)=>`<div class="vrow"><span class="mut">${faDateShort(entryDay(h))}</span><div class="vtrack"><i aria-hidden="true" style="width:calc((100% - 56px) * ${Math.round(vols[i]/mx*1000)/1000})"></i><b>${faNum(vols[i])}</b></div></div>`).join("")}</div>`;
 }
 
 function blockSection(){return vMeso();}
@@ -810,9 +859,9 @@ function vHistory(){
     const ci=h.checkin;
     return `<div class="card">
     <div class="spread"><b>${$esc(h.dayName)}</b><span class="mut">${fmtDate(entryDay(h))}</span></div>
-    <div class="row mut" style="margin:6px 0">${faNum(h.volume)} کگ حجم • ${faNum((h.exercises||[]).reduce((a,e)=>a+(e.sets||[]).length,0))} ست • ${faNum(h.durationMin)} دقیقه
+    <div class="row mut" style="margin:6px 0">${faNum(h.volume)} کگ حجم • ${faNum(Math.round((h.exercises||[]).reduce((a,e)=>a+setCount(e),0)*10)/10)} ست • ${faNum(h.durationMin)} دقیقه
     ${ci?(ci.joint?` • <span class="pain">درد مفصل</span>`:"")+(ci.sore>=2?` • کوفتگی ${faNum(ci.sore)}/۳`:""):""}</div>
-    ${(h.exercises||[]).map(e=>`<div class="li"><b>${$esc(e.name)}</b><span class="mut">${(e.sets||[]).map(s=>s.w?faNum(s.w)+" کگ × "+faNum(s.r)+" تکرار"+(s.rir!=null&&s.rir!==""?" (RIR "+faNum(s.rir)+")":""):faNum(s.r)+" تکرار").join(" ، ")}</span></div>`).join("")}
+    ${(h.exercises||[]).map(e=>`<div class="li"><b>${$esc(e.name)}${e.er?` <span class="pr">ER ${faNum(erReps(e))}</span>`:""}</b><span class="mut">${(e.sets||[]).map(s=>(s.t==="ig"?"⚡ ":"")+(s.w?faNum(s.w)+" کگ × "+faNum(s.r)+" تکرار"+(s.rir!=null&&s.rir!==""?" (RIR "+faNum(s.rir)+")":""):faNum(s.r)+" تکرار")).join(" ، ")}</span></div>`).join("")}
     </div>`;
   }).join("");
 }
@@ -857,7 +906,7 @@ function vSettings(){
   </div>
   <div class="card">
     <h2>درباره</h2>
-    <p class="mut">نسخهٔ ۲٫۲٫۱ · مبتنی بر ۲۳ سند علمی تدوین‌شده از Renaissance Periodization، Flow High Performance و Huberman/Galpin · آخرین بازبینی شواهد: ۲۰۲۶-۰۸-۲۴ · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/KNOWLEDGE.md" target="_blank" rel="noopener" style="color:var(--blue)">KNOWLEDGE.md</a> · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/POLICY.md" target="_blank" rel="noopener" style="color:var(--blue)">POLICY.md</a></p>
+    <p class="mut">نسخهٔ ۲٫۳٫۰ · مبتنی بر ۲۳ سند علمی تدوین‌شده از Renaissance Periodization، Flow High Performance و Huberman/Galpin · آخرین بازبینی شواهد: ۲۰۲۶-۰۸-۲۴ · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/KNOWLEDGE.md" target="_blank" rel="noopener" style="color:var(--blue)">KNOWLEDGE.md</a> · <a href="https://raw.githubusercontent.com/najiballahhaqmal568-hub/myboybuildingrepo/main/POLICY.md" target="_blank" rel="noopener" style="color:var(--blue)">POLICY.md</a></p>
     <p class="mut" style="margin-top:6px">داده‌ها فقط روی همین دستگاه ذخیره می‌شوند (localStorage). «نشانگر تغییر بار» صرفاً راهنمای افزایش تدریجی است. این اپ مشاور پزشکی نیست — دامنه و مرزها در اولین اجرا پذیرفته شده‌اند.</p>
   </div>`;
 }
@@ -874,18 +923,49 @@ document.addEventListener("click",ev=>{
   if(act==="toggle-set"){
     const i=+el.dataset.i,j=+el.dataset.j,row=el.closest("tr");
     const g=r=>row.querySelector(`[data-role="${r}"]`);
-    s.exercises[i].sets[j]={w:g("w").value,r:g("r").value,rir:S.settings.rir?(g("rir")?g("rir").value:""):"",done:!s.exercises[i].sets[j].done};
-    if(s.exercises[i].sets[j].done&&navigator.vibrate)navigator.vibrate(35);
+    const e=s.exercises[i],old=e.sets[j];
+    if(old.t&&!old.done&&!(+g("r").value>0)){toast("تعداد تکرار را وارد کن");return;}
+    const st=e.sets[j]=Object.assign({},old,{w:g("w").value,r:g("r").value,rir:S.settings.rir?(g("rir")?g("rir").value:""):"",done:!old.done});
+    if(st.done&&navigator.vibrate)navigator.vibrate(35);
     ui.openEx=i;
+    let rest=st.done?restFor(exById(e.exId)):0;
+    if(st.done&&e.er){
+      if(erReps(e)>=e.er){
+        e.sets=e.sets.filter((x,k)=>k<=j||x.done);
+        ui.openEx=null;
+        toast("ER "+faNum(erReps(e))+"/"+faNum(e.er)+" — این حرکت تمام شد ✅");
+      }else{
+        if(j===e.sets.length-1)e.sets.push({w:st.w,r:"",t:"er",done:false});
+        rest=erRest();
+      }
+    }
     save();render();
-    if(s.exercises[i].sets[j].done)startRest(90);
+    if(rest)startRest(rest);
     return;
   }
   if(act==="add-set"){
-    const i=+el.dataset.i,st=s.exercises[i].sets,last=st[st.length-1];
-    st.push({w:last?last.w:"",r:last?last.r:"",done:false});
+    const i=+el.dataset.i,e=s.exercises[i],st=e.sets,last=st[st.length-1];
+    st.push(e.er?{w:last?last.w:"",r:"",t:"er",done:false}:{w:last?last.w:"",r:last?last.r:"",done:false});
     save();render();return;
   }
+  if(act==="er-toggle"){
+    const i=+el.dataset.i,e=s.exercises[i],lib=exById(e.exId);
+    S.erPref=S.erPref||{};
+    if(e.er){
+      delete e.er;e.sets.forEach(x=>delete x.t);delete S.erPref[e.exId];
+    }else{
+      if(!erOK(lib))return;
+      if(e.sets.some(x=>x.done)){toast("ER را قبل از اولین ست روشن کن");return;}
+      erLayout(e,erGoalDef(lib));S.erPref[e.exId]=e.er;
+    }
+    ui.openEx=i;save();render();return;
+  }
+  if(act==="er-goal"){
+    const e=s.exercises[+el.dataset.i];e.er=+el.dataset.v;
+    S.erPref=S.erPref||{};S.erPref[e.exId]=e.er;
+    save();render();return;
+  }
+  if(act==="er-rest"){S.settings.erRest=+el.dataset.v;save();render();return;}
   if(act==="del-exercise"){s.exercises.splice(+el.dataset.i,1);ui.openEx=null;save();render();return;}
   if(act==="add-exercise"){ui.pickerTarget="session";openModal(pickerEx());return;}
   if(act==="tune-accept"){
@@ -978,8 +1058,8 @@ document.addEventListener("click",ev=>{
     closeModal();
     if(s){
       const id=el.dataset.id,lib=exById(id),prev=lastSetsFor(id);
-      s.exercises.push({exId:id,name:lib.n,cls:lib.cls,target:3,
-        sets:(prev.length?prev.slice(0,3):[{w:"",r:""}]).map(x=>({w:x.w,r:x.r,done:false}))});
+      s.exercises.push(withEr({exId:id,name:lib.n,cls:lib.cls,target:3,
+        sets:(prev.length?prev.slice(0,3):[{w:"",r:""}]).map(x=>({w:x.w,r:x.r,done:false}))}));
       save();render();
     }
     return;
@@ -1019,9 +1099,11 @@ document.addEventListener("click",ev=>{
   if(act==="save-bw"){doSaveWeight($("#bw-in").value);return;}
   if(act==="toggle-rir"){S.settings.rir=!S.settings.rir;save();render();return;}
   if(act==="export"){
+    S.lastBackup=today();save();
     const blob=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-    a.download="gymlog-backup-"+today()+".json";a.click();URL.revokeObjectURL(a.href);return;
+    a.download="gymlog-backup-"+today()+".json";a.click();URL.revokeObjectURL(a.href);
+    render();return;
   }
   if(act==="wipe"){if(confirm("همه داده‌ها پاک شوند؟")){localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);S=loadState();render();toast("پاک شد");}return;}
   if(act==="close-modal"){closeModal();return;}
@@ -1050,6 +1132,7 @@ document.addEventListener("change",ev=>{
     if(s){
       const st=s.exercises[+el.dataset.i].sets[+el.dataset.j];
       st[el.dataset.role]=el.dataset.role==="rir"?(el.value===""?"":+el.value):el.value;
+      if(el.dataset.role!=="rir")st.ed=1;
     }
     save();
   }
@@ -1117,22 +1200,25 @@ function endRest(done){
 
 function finishWorkout(){
   const s=S.activeSession;if(!s)return;
-  const used=s.exercises.filter(e=>e.sets.some(st=>st.w||st.r));
-  if(!used.length){toast("هیچ ست‌ای ثبت نشده!");return;}
+  const used=s.exercises.map(e=>Object.assign({},e,{sets:e.sets.filter(st=>st.done&&(st.w||st.r))})).filter(e=>e.sets.length);
+  if(!used.length){toast("هیچ ستی ✓ نخورده — ست‌های انجام‌شده را تیک بزن");return;}
+  const loose=s.exercises.reduce((a,e)=>a+e.sets.filter(st=>st.ed&&!st.done&&(st.w||st.r)).length,0);
+  if(loose&&!confirm(faNum(loose)+" ست پر شده ولی ✓ نخورده و ذخیره نمی‌شود. ادامه؟"))return;
   used.forEach(e=>{
     const best=e.sets.filter(st=>+st.w>0&&+st.r>0).sort((a,b)=>e1rm(+b.w,+b.r)-e1rm(+a.w,+a.r))[0];
     if(best){const p=S.prs[e.exId];
       if(!p||e1rm(+best.w,+best.r)>e1rm(p.w,p.r))S.prs[e.exId]={w:+best.w,r:+best.r,date:today()};}
   });
   const mins=Math.max(1,Math.round((Date.now()-new Date(s.startedAt).getTime())/60000));
-  S.history.push({
+  const entry={
     date:new Date().toISOString(),
     day:localDateKey(s.startedAt),
     dayId:s.dayId,dayName:s.dayName,durationMin:mins,deload:!!s.deload,
-    exercises:used.map(e=>({exId:e.exId,name:e.name,
-      sets:e.sets.filter(st=>st.w||st.r).map(st=>({w:+st.w||"",r:+st.r,rir:st.rir===""||st.rir==null?undefined:+st.rir}))})),
-    volume:volOf(s)
-  });
+    exercises:used.map(e=>Object.assign({exId:e.exId,name:e.name,
+      sets:e.sets.map(st=>Object.assign({w:+st.w||"",r:+st.r,rir:st.rir===""||st.rir==null?undefined:+st.rir},st.t?{t:st.t}:{}))},e.er?{er:e.er}:{}))
+  };
+  entry.volume=volOf(entry);
+  S.history.push(entry);
   S.activeSession=null;save();endRest(false);
   openModal(`<h2>چک-این سریع</h2>
   <p class="mut" style="margin-bottom:8px">کوفتگی عضلانی امروز (۰ = هیچ، ۳ = شدید):</p>
@@ -1193,6 +1279,11 @@ window.__GL={
  finish:()=>finishWorkout(),
  rirDefault:(id)=>defRir(exById(id)),
  suggest:(id)=>{const s=suggestNext(id);return s?s.txt:"";},
+ rest:()=>ui.rest,
+ restFor:(id)=>restFor(exById(id)),
+ weekSets:()=>weekSets(),
+ ex:(id)=>exById(id),
+ erOK:(id)=>erOK(exById(id)),
  go:(t)=>setTab(t),
  importJSON:(txt)=>{try{const d=JSON.parse(txt);if(!d.history||!d.version)throw 0;S=Object.assign(JSON.parse(JSON.stringify(DEFAULT)),d);save();render();return true;}catch(e){return false;}},
  exportJSON:()=>JSON.stringify(S),

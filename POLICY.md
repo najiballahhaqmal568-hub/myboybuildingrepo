@@ -19,6 +19,10 @@ If any safety condition triggers, growth rules yield automatically.
 | Exercise changes | Swap only after plateau (3 flat sessions) or pain; compounds kept ≥3 mesos | Weekly rotation | FHP ep42 study: consistency out-grows rotation |
 | ACWR | **Load-change indicator only** — never an injury predictor | Team-sport injury-risk framing | Audit + methodological critiques (PMID 32572824, 32502973) |
 | End-of-meso review | Reactive wizard: hold / volume ±1–2 / pain→swap; tired → −10% all targets | Proactive annual plans | FHP ep8; audit §3 |
+| Effective Reps (ER) mode | Opt-in per exercise, remembered. Ignition set at a 10–12-rep weight to technical failure (not counted) → 15–30 s rest → mini-sets to technical failure until 20 ERs (10 for dips/pull-ups). ER rows default to RIR 0. Volume = 1 set for the ignition + 1 set per 5 ERs. Deload / poor sleep scale the goal ×0.5 / ×0.75 | Myo-match sets; rest-pause on barbell compounds | Owner decision 2026-10-13 (Athlean-X "effective reps"). Same mechanism as Myo-reps (KNOWLEDGE.md, Training modalities). A deliberate, owner-chosen exception to constant RIR for the compounds it allows |
+| ER eligibility | Allowed: dumbbell, cable, machine, bodyweight, and barbell isolation. Blocked: barbell compounds (squat, deadlift, RDL, bench, OHP, row, hip thrust) and timed holds (plank) | ER on everything | Failure on barbell compounds is unsafe without a spotter; KNOWLEDGE.md: "never for deadlifts/squats" |
+| Rest timer | By class: heavy compound 3 min, compound 2 min, isolation 90 s; ER rows 20 s (15/30 selectable) | Fixed 90 s for all | KNOWLEDGE.md: rest 1–3 min, ≥2 min for max stimulus |
+| What a workout saves | Only ✓ sets. Rows the user edited but did not tick trigger a confirm before they are dropped | Save every filled row | Rows are prefilled from last session; saving them recorded skipped exercises as done (fake history, volume, plateau signals) |
 
 ## Safety boundaries (engine scope lock)
 
